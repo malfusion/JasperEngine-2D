@@ -113,44 +113,36 @@ var JasperCore    = (function(){
 });
 
 
-var JasperScene = (function(){
-    var objects = [];
-    var sceneName = "";
-    var worldSize={};
-    var viewportSize={};
+var JasperScene = (function(sceneName){
+    var sceneName = sceneName;
+    var layerList=[]
+    var numLayers=0;
 
     return {
-      class : 'JasperScene',
-      setSceneName: function(name){
+        class : 'JasperScene',
+        setSceneName: function(name){
             sceneName=name;
-      },
-      getSceneName: function(){
+        },
+        getSceneName: function(){
             return sceneName;
-      },
-      setWorldSize: function(width,height){
-            worldSize.x=width; worldSize.y=height;
-      },
-      getWorldSize: function(){
-            return worldSize;
-      },
-      setViewportSize: function(width,height){
-            viewportSize.x=width; viewportSize.y=height;
-      },
-      getViewportSize: function(){
-            return viewportSize;
-      },
-      addObject: function(object){
+        },
+        //                                Option to add layer number for comfort
+        addLayer: function(jasperLayer){
+            if(jasperLayer.class == "JasperLayer"){
+                layerList.push(jasperLayer);
+                numLayers++;
+            }
+            else{
+                console.log("Cannot add object of type : "+jasperLayer.class+" need JasperLayer");
+            }
+        },
+        update: function(){
+            console.log(this.getSceneName());
 
-      },
-      removeObject: function(object){
-
-      },
-      getObjects: function(){
-          return objects;
-      },
-      update: function(){
-          console.log(this.getSceneName());
-      }
+            for (var i=0 ;i<numLayers; i++){
+                layerList[i].update(i);
+            }
+        }
 
 
     };
@@ -158,9 +150,57 @@ var JasperScene = (function(){
 
 });
 
-var JasperObject = (function(core){
+var JasperLayer=(function(){
+    var worldSize={};
+    var viewportSize={};
+    var objects = [];
+    var numObjects = 0;
+
+    return {
+        class: "JasperLayer",
+        setWorldSize: function(width,height){
+            worldSize.x=width; worldSize.y=height;
+        },
+        getWorldSize: function(){
+            return worldSize;
+        },
+        setViewportSize: function(width,height){
+            viewportSize.x=width; viewportSize.y=height;
+        },
+        getViewportSize: function(){
+            return viewportSize;
+        },
+        addObject: function(jasperObject){
+            if(jasperObject.class == "JasperObject"){
+                objects.push(jasperObject);
+                numObjects++;
+            }
+            else{
+                console.log("Cannot add object of type : "+jasperObject.class+" ; needs JasperObject" );
+            }
+
+        },
+        removeObject: function(object){
+
+        },
+        getObjects: function(){
+            return objects;
+        },
+        update: function(layerNumber){
+            console.log('Layer '+layerNumber+" then "+numObjects);
+            for(var i=0; i<numObjects; i++){
+                objects[i].update();
+            }
+        }
+
+    };
+
+});
+
+var JasperObject = (function(objectName){
     var behaviors=[];
     var visible = false;
+    var name=objectName;
 
     return {
         class: 'JasperObject',
@@ -181,10 +221,10 @@ var JasperObject = (function(core){
         },
         isVisible: function(){
             return visible;
+        },
+        update: function(){
+            console.log(name);
         }
-
-
-
 
     }
 });

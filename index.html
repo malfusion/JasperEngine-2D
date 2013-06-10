@@ -13,14 +13,25 @@
             height: 500
         });
 
-        var scene1 = JasperScene();
-        scene1.setSceneName('one');
+        var scene1 = JasperScene('one');
         gameCore.addScene(scene1);
-        var scene2 = JasperScene();
-        scene2.setSceneName('two');
+
+        var scene2 = JasperScene('two');
         gameCore.addScene(scene2);
-        for(var i=0; i<gameCore.getScenes().length; i++)
-            console.log(gameCore.getScenes()[i].getSceneName());
+
+        gameCore.startScene(scene1);
+        setTimeout(function(){
+            var layer0 = JasperLayer();
+            scene1.addLayer(layer0);
+
+            var hero = JasperObject('heroObj');
+            layer0.addObject(hero);
+            var vill = JasperObject('villain');
+            layer0.addObject(vill);
+
+
+        },3000);
+
 
 
 </script>
