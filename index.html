@@ -8,16 +8,16 @@
 <script src="js/engine.js"></script>
 <script>
     window.onload = function(){
-        var gameCore = JunisCore();
+        var gameCore = JasperCore();
         gameCore.init({
             width: 500,
             height: 500
         });
 
-        var scene1 = JunisScene();
+        var scene1 = JasperScene();
         scene1.setSceneName('one');
         gameCore.addScene(scene1);
-        var scene2 = JunisScene();
+        var scene2 = JasperScene();
         scene2.setSceneName('two');
         gameCore.addScene(scene2);
         for(var i=0; i<gameCore.getScenes().length; i++)

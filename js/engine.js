@@ -8,7 +8,7 @@
 
 
 
-var JunisCore    = (function(){
+var JasperCore    = (function(){
 
     var fps = 0;
     var canvasContext;
@@ -53,28 +53,28 @@ var JunisCore    = (function(){
             running=true;
             requestAnimFrame(update);
         },
-        addScene: function(junisScene){
-            if(scenes.indexOf(junisScene) == -1)
-                scenes.push(junisScene);
+        addScene: function(jasperScene){
+            if(scenes.indexOf(jasperScene) == -1)
+                scenes.push(jasperScene);
         },
-        removeScene: function(junisScene){
-            if(activeScene == junisScene){
+        removeScene: function(jasperScene){
+            if(activeScene == jasperScene){
                 console.log("Trying to remove currently active scene not permitted.")
                 return;
             }
 
-            indx=scenes.indexOf(junisScene);
+            indx=scenes.indexOf(jasperScene);
             if(indx != -1)
                 scenes.splice(indx,1);
 
         },
-        removeSceneByName: function(junisSceneName){
-            if(activeScene.getSceneName() == junisSceneName){
+        removeSceneByName: function(jasperSceneName){
+            if(activeScene.getSceneName() == jasperSceneName){
                 console.log("Trying to remove currently active scene not permitted.")
                 return;
             }
             for (var i=0; i<scenes.length; i++){
-                if(scenes.getSceneName()==junisSceneName){
+                if(scenes.getSceneName()==jasperSceneName){
                     scenes.splice(i,1);
                 }
             }
@@ -82,7 +82,7 @@ var JunisCore    = (function(){
         getScenes: function(){
             return scenes;
         },
-        startScene: function(junisScene){
+        startScene: function(jasperScene){
 
         }
 
@@ -93,7 +93,7 @@ var JunisCore    = (function(){
 });
 
 
-var JunisScene = (function(){
+var JasperScene = (function(){
     var objects = [];
     var sceneName = "";
     var worldSize={};
