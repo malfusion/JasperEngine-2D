@@ -7,7 +7,6 @@
 <div id="container"></div>
 <script src="js/engine.js"></script>
 <script>
-    window.onload = function(){
         var gameCore = JasperCore();
         gameCore.init({
             width: 500,
@@ -22,7 +21,7 @@
         gameCore.addScene(scene2);
         for(var i=0; i<gameCore.getScenes().length; i++)
             console.log(gameCore.getScenes()[i].getSceneName());
-    }
+
 
 </script>
 </body>

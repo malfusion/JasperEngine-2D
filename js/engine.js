@@ -6,7 +6,7 @@
  * To change this template use File | Settings | File Templates.
  */
 
-
+var Jasper = {};
 
 var JasperCore    = (function(){
 
@@ -14,6 +14,9 @@ var JasperCore    = (function(){
     var canvasContext;
     var running = false;
     var scenes=[];
+    var activeScene;
+    //var core;
+    //var behaviorManager;
 
     function createCanvas(width, height){
         canvas = document.createElement('canvas');
@@ -31,12 +34,15 @@ var JasperCore    = (function(){
         if(running)
             requestAnimFrame(update);
         console.log('Frame');
+        if(activeScene != undefined)
+            if(activeScene.class == "JasperScene")
+                activeScene.update();
         render();
 
     }
 
     return{
-
+        class : "JasperCore",
 
         setFps : function(engineFps){
                        fps=engineFps;
@@ -46,6 +52,8 @@ var JasperCore    = (function(){
         init : function(args){
             createCanvas(args.width, args.height);
             this.setFps(args.fps || 30);
+            Jasper.core = this;
+            Jasper.behaviorManager = JasperBehaviorManager();
             this.start();
         },
 
@@ -59,11 +67,11 @@ var JasperCore    = (function(){
         },
         removeScene: function(jasperScene){
             if(activeScene == jasperScene){
-                console.log("Trying to remove currently active scene not permitted.")
+                console.log("Trying to remove currently active scene not permitted.");
                 return;
             }
 
-            indx=scenes.indexOf(jasperScene);
+            var indx=scenes.indexOf(jasperScene);
             if(indx != -1)
                 scenes.splice(indx,1);
 
@@ -83,7 +91,19 @@ var JasperCore    = (function(){
             return scenes;
         },
         startScene: function(jasperScene){
+            activeScene = jasperScene;
+        },
+        endScene: function(){
+            scenes.splice(scenes.indexOf(activeScene),1);
+            activeScene = undefined;
 
+        },
+
+        getCore: function(){
+            return core;
+        },
+        addBehaviorObjectPair: function(behavior, object){
+            Jasper.behaviorManager.addBehaviorToObject(behavior, object);
         }
 
     };
@@ -100,7 +120,7 @@ var JasperScene = (function(){
     var viewportSize={};
 
     return {
-
+      class : 'JasperScene',
       setSceneName: function(name){
             sceneName=name;
       },
@@ -127,8 +147,10 @@ var JasperScene = (function(){
       },
       getObjects: function(){
           return objects;
+      },
+      update: function(){
+          console.log(this.getSceneName());
       }
-
 
 
     };
@@ -136,8 +158,48 @@ var JasperScene = (function(){
 
 });
 
+var JasperObject = (function(core){
+    var behaviors=[];
+    var visible = false;
+
+    return {
+        class: 'JasperObject',
+        core : undefined,
+        scene : undefined,
+
+        addBehavior: function (behaviorName){
+            Jasper.core.addBehaviorObjectPair(behaviorName)
+            behaviors.push(comp);
+        },
+        removeBehavior: function (behaviorName){
+            for( var i=0; i<behaviors.length; i++){
+                //if(behaviors[i])
+            }
+        },
+        setVisible: function(isVisible){
+            visible=isVisible;
+        },
+        isVisible: function(){
+            return visible;
+        }
 
 
+
+
+    }
+});
+
+
+var JasperBehaviorManager = (function(){
+    var beh_BehObjPairs={};
+    return{
+        class: 'JasperBehaviorManager',
+        addBehaviorToObject: function(behavior, object){
+
+        }
+
+    }
+});
 window.requestAnimFrame = (function(){
     return  window.requestAnimationFrame       ||
         window.webkitRequestAnimationFrame ||
