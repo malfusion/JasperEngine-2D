@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div id="container"></div>
+<script src="js/engine.js"></script>
+<script>
+    window.onload = function(){
+        var gameCore = JunisCore();
+        gameCore.init({
+            width: 500,
+            height: 500
+        });
+
+        var scene1 = JunisScene();
+        scene1.setSceneName('one');
+        gameCore.addScene(scene1);
+        var scene2 = JunisScene();
+        scene2.setSceneName('two');
+        gameCore.addScene(scene2);
+        for(var i=0; i<gameCore.getScenes().length; i++)
+            console.log(gameCore.getScenes()[i].getSceneName());
+    }
+
+</script>
+</body>
+</html>
