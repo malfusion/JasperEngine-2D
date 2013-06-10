@@ -102,8 +102,8 @@ var JasperCore    = (function(){
         getCore: function(){
             return core;
         },
-        addBehaviorObjectPair: function(behavior, object){
-            Jasper.behaviorManager.addBehaviorToObject(behavior, object);
+        addBehaviorObjectPair: function(behaviorName, object){
+            return Jasper.behaviorManager.addBehaviorToObject(behaviorName, object);
         }
 
     };
@@ -198,7 +198,7 @@ var JasperLayer=(function(){
 });
 
 var JasperObject = (function(objectName){
-    var behaviors=[];
+    var behaviorNames=[];
     var visible = false;
     var name=objectName;
 
@@ -207,12 +207,18 @@ var JasperObject = (function(objectName){
         core : undefined,
         scene : undefined,
 
-        addBehavior: function (behaviorName){
-            Jasper.core.addBehaviorObjectPair(behaviorName)
-            behaviors.push(comp);
+        //RETURNS: JasperBehavior Object
+        addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
+            if(typeof (behavior) == "string"){
+                var behavior = Jasper.core.addBehaviorObjectPair(behaviorName);
+                if(behavior.class == "JasperBehavior"){
+                    behaviorNames.push(behaviorName);
+                    return behavior;
+                }
+            }
         },
         removeBehavior: function (behaviorName){
-            for( var i=0; i<behaviors.length; i++){
+            for( var i=0; i<behaviorNames.length; i++){
                 //if(behaviors[i])
             }
         },
@@ -232,9 +238,23 @@ var JasperObject = (function(objectName){
 
 var JasperBehaviorManager = (function(){
     var beh_BehObjPairs={};
+    var Name_Beh={'move':MoveBehavior};
+
     return{
         class: 'JasperBehaviorManager',
-        addBehaviorToObject: function(behavior, object){
+
+        //Could be behavior NAME ////////////NOT SURE: or JasperBEhavior Object
+        addBehaviorToObject: function(behaviorName, object){
+            if(typeof (behavior) == "string")
+                if( hasOwnProperty(Name_Beh,behaviorName) ){
+                    var behavior = Name_Beh[behaviorName]();
+                    beh_BehObjPairs[behaviorName] = [behavior,object];
+                    return behavior;
+                }
+                else{
+                    console.log("Behavior has not been registered to JasperCore");
+                    return null;
+                }
 
         }
 
@@ -249,3 +269,26 @@ window.requestAnimFrame = (function(){
         };
 })();
 
+
+
+
+
+
+
+
+
+
+//HELPERS
+
+
+function hasOwnProperty(obj, prop) {
+    var proto = obj.__proto__ || obj.constructor.prototype;
+    return (prop in obj) &&
+        (!(prop in proto) || proto[prop] !== obj[prop]);
+}
+
+if ( Object.prototype.hasOwnProperty ) {
+    var hasOwnProperty = function(obj, prop) {
+        return obj.hasOwnProperty(prop);
+    }
+}
