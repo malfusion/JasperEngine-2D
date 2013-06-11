@@ -15,6 +15,8 @@ var JasperCore    = (function(){
     var running = false;
     var scenes=[];
     var activeScene;
+    var lastTime;
+
     //var core;
     //var behaviorManager;
 
@@ -28,15 +30,28 @@ var JasperCore    = (function(){
 
     function render() {
 
+        if(activeScene != undefined)
+            if(activeScene.class == "JasperScene"){
+                canvasContext.clearRect(0,0,500,500);
+                activeScene.render(canvasContext);
+            }
+
     }
 
     function update(){
+        currTime = new Date().getTime();
+        if(lastTime == undefined)
+            lastTime = currTime;
+        var elapsedTime = currTime - lastTime;
+        lastTime=currTime;
+        console.log(elapsedTime);
+
         if(running)
             requestAnimFrame(update);
-        console.log('Frame');
+        //console.log('Frame');
         if(activeScene != undefined)
             if(activeScene.class == "JasperScene")
-                activeScene.update();
+                activeScene.update(elapsedTime);
         render();
 
     }
@@ -103,7 +118,7 @@ var JasperCore    = (function(){
             return core;
         },
         addBehaviorObjectPair: function(behaviorName, object){
-            return Jasper.behaviorManager.addBehaviorToObject(behaviorName, object);
+           return Jasper.behaviorManager.addBehaviorToObject(behaviorName, object);
         }
 
     };
@@ -136,11 +151,16 @@ var JasperScene = (function(sceneName){
                 console.log("Cannot add object of type : "+jasperLayer.class+" need JasperLayer");
             }
         },
-        update: function(){
-            console.log(this.getSceneName());
+        update: function(dt){
+            //console.log(this.getSceneName());
 
             for (var i=0 ;i<numLayers; i++){
-                layerList[i].update(i);
+                layerList[i].update(dt);
+            }
+        },
+        render: function(canvasContext){
+            for (var i=0 ;i<numLayers; i++){
+                layerList[i].render(canvasContext);
             }
         }
 
@@ -186,10 +206,15 @@ var JasperLayer=(function(){
         getObjects: function(){
             return objects;
         },
-        update: function(layerNumber){
-            console.log('Layer '+layerNumber+" then "+numObjects);
+        update: function(dt){//layerNumber{
+            //console.log('Layer '+layerNumber+" then "+numObjects);
             for(var i=0; i<numObjects; i++){
-                objects[i].update();
+                objects[i].update(dt);
+            }
+        },
+        render: function(canvasContext){
+            for(var i=0; i<numObjects; i++){
+                objects[i].render(canvasContext);
             }
         }
 
@@ -198,21 +223,51 @@ var JasperLayer=(function(){
 });
 
 var JasperObject = (function(objectName){
-    var behaviorNames=[];
+    var behaviors={};
+    var rendererBehavior;
     var visible = false;
+    var posX = 0;
+    var posY = 0;
+    var worldX = 0;
+    var worldY = 0;
+    var rotation = 0;
+
+
     var name=objectName;
 
     return {
         class: 'JasperObject',
         core : undefined,
-        scene : undefined,
 
+        scene : undefined,
+        getPosX:function(){
+            return posX;
+        },
+        setPosX: function(posx){
+            posX=posx;
+        },
+        getPosY:function(){
+            return posY;
+        },
+        setPosY: function(posy){
+            posY=posy;
+        },
         //RETURNS: JasperBehavior Object
         addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
-            if(typeof (behavior) == "string"){
-                var behavior = Jasper.core.addBehaviorObjectPair(behaviorName);
+            if(typeof (behaviorName) == "string"){
+                var behavior = Jasper.core.addBehaviorObjectPair(behaviorName, this);
                 if(behavior.class == "JasperBehavior"){
-                    behaviorNames.push(behaviorName);
+                    behaviors[behaviorName]=behavior;
+                    behavior.parentObject = this;
+                    behavior.getParentObject = function(){
+                        return this.parentObject;
+                    }
+                    if(hasOwnProperty(behavior,'render')){
+                        if(typeof(behavior.render) == "function"){
+                            console.log("renderer found");
+                            rendererBehavior = behavior;
+                        }
+                    }
                     return behavior;
                 }
             }
@@ -228,9 +283,21 @@ var JasperObject = (function(objectName){
         isVisible: function(){
             return visible;
         },
-        update: function(){
-            console.log(name);
+        update: function(dt){
+            //console.log(name);
+            for (behavior in behaviors){
+                //console.log(name+" : "+behavior);
+                behaviors[behavior].update(dt);
+            }
+        },
+        render: function(ctx){
+            rendererBehavior.render(ctx);
+        },
+        // Custom Renderer Behavior overwrites all older behaviors and can be used for dynamic rendering
+        setCustomRenderer: function(rendererBehaviorName){
+            rendererBehavior = behaviors[rendererBehaviorName];
         }
+
 
     }
 });
@@ -238,23 +305,32 @@ var JasperObject = (function(objectName){
 
 var JasperBehaviorManager = (function(){
     var beh_BehObjPairs={};
-    var Name_Beh={'move':MoveBehavior};
+    var Name_Beh={
+        //'move': MoveBehavior,
+        'circle': CircleDrawBehavior,
+        'testmove': RandomMoveBehavior
+    };
 
     return{
         class: 'JasperBehaviorManager',
 
         //Could be behavior NAME ////////////NOT SURE: or JasperBEhavior Object
         addBehaviorToObject: function(behaviorName, object){
-            if(typeof (behavior) == "string")
+            if(typeof (behaviorName) == "string"){
                 if( hasOwnProperty(Name_Beh,behaviorName) ){
+
                     var behavior = Name_Beh[behaviorName]();
                     beh_BehObjPairs[behaviorName] = [behavior,object];
+                    console.log("returning behavior");
                     return behavior;
                 }
                 else{
                     console.log("Behavior has not been registered to JasperCore");
+                    console.log("returning null");
                     return null;
+
                 }
+            }
 
         }
 
@@ -269,12 +345,92 @@ window.requestAnimFrame = (function(){
         };
 })();
 
+// Must define "class":"JasperBehavior" when creating behaviour
 
 
 
+var DrawBehavior = (function(){
+    return {
+        render: function(){
+
+        }
+    }
+});
+
+var RandomMoveBehavior = (function(){
+    var finalx = Math.floor((Math.random()*500)+1);
+    var finaly = Math.floor((Math.random()*500)+1);
+    var initx = 0;
+    var inity = 0;
+    var elapsed=0;
+    return{
+        class: "JasperBehavior",
+        update: function(dt){
+            parent = this.getParentObject();
+            elapsed+=dt;
+            if(elapsed<20000){
+                parent.setPosX(Math.floor((finalx-initx)/20000.0*elapsed));
+                parent.setPosY(Math.floor((finaly-inity)/20000.0*elapsed));
+            }
+        }
+
+    }
+});
+
+var CircleDrawBehavior = (function(){
+    var rad = 0;
+    var strokeColor = 'black';
+    var strokeWidth = 5;
+    var fillColor = 'black';
+    var fill = true;
+    var stroke = true;
 
 
+    return{
+        class: "JasperBehavior",
 
+        setRadius:function(radius){
+            rad=radius;
+            return this;
+        },
+        setFillColor: function(color){
+            fillColor = color;
+            return this;
+        },
+        setFillEnabled: function(boolean){
+            fill=boolean;
+            return this;
+        },
+        setStrokeEnabled: function(boolean){
+            stroke=boolean;
+            return this;
+        },
+        setStrokeWidth: function(width){
+            strokeWidth=width;
+            return this;
+        },
+        update: function(dt){},
+
+        render:function(ctx){
+            parent = this.getParentObject();
+            ctx.beginPath();
+
+            ctx.arc(parent.getPosX(), parent.getPosY(), rad, 0, 2 * Math.PI, true);
+            if(fill){
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+            }
+            if(stroke){
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+            }
+
+
+        }
+
+    }
+});
 
 
 
