@@ -6,7 +6,18 @@
  * To change this template use File | Settings | File Templates.
  */
 
+ /*
+ *
+ * ALWAYS RENDER WITHOUT FLOATS
+ *
+ * TODO: remove behavior
+ *
+ *
+  */
+
+var showFps = false;
 var Jasper = {};
+
 
 var JasperCore    = (function(){
 
@@ -16,7 +27,7 @@ var JasperCore    = (function(){
     var scenes=[];
     var activeScene;
     var lastTime;
-
+    var canvas;
     //var core;
     //var behaviorManager;
 
@@ -24,6 +35,9 @@ var JasperCore    = (function(){
         canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
+        canvas.onmousemove = JasperMouse.mouseMove;
+        //canvas.onmousedown = JasperMouse.mouseDown;
+
         document.getElementById('container').appendChild(canvas);
         canvasContext = canvas.getContext('2d');
     }
@@ -44,7 +58,8 @@ var JasperCore    = (function(){
             lastTime = currTime;
         var elapsedTime = currTime - lastTime;
         lastTime=currTime;
-        console.log(elapsedTime);
+        if(showFps)
+            console.log(elapsedTime);
 
         if(running)
             requestAnimFrame(update);
@@ -75,6 +90,9 @@ var JasperCore    = (function(){
         start : function(){
             running=true;
             requestAnimFrame(update);
+        },
+        getCanvas: function(){
+            return canvas;
         },
         addScene: function(jasperScene){
             if(scenes.indexOf(jasperScene) == -1)
@@ -119,7 +137,11 @@ var JasperCore    = (function(){
         },
         addBehaviorObjectPair: function(behaviorName, object){
            return Jasper.behaviorManager.addBehaviorToObject(behaviorName, object);
+        },
+        createBehavior: function(behaviorName, behaviorContent){
+            return Jasper.behaviorManager.createBehavior(behaviorName, behaviorContent)
         }
+
 
     };
 
@@ -231,6 +253,7 @@ var JasperObject = (function(objectName){
     var worldX = 0;
     var worldY = 0;
     var rotation = 0;
+    var alpha = 0;
 
 
     var name=objectName;
@@ -240,7 +263,7 @@ var JasperObject = (function(objectName){
         core : undefined,
 
         scene : undefined,
-        getPosX:function(){
+        getPosX: function(){
             return posX;
         },
         setPosX: function(posx){
@@ -252,10 +275,20 @@ var JasperObject = (function(objectName){
         setPosY: function(posy){
             posY=posy;
         },
+        setPos: function(x,y){
+            posX=x; posY=y;
+        },
+        getAlpha:function(){
+            return alpha;
+        },
+        setAlpha: function(val){
+            alpha=val;
+        },
         //RETURNS: JasperBehavior Object
         addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
             if(typeof (behaviorName) == "string"){
                 var behavior = Jasper.core.addBehaviorObjectPair(behaviorName, this);
+                console.log(behavior);
                 if(behavior.class == "JasperBehavior"){
                     behaviors[behaviorName]=behavior;
                     behavior.parentObject = this;
@@ -273,9 +306,13 @@ var JasperObject = (function(objectName){
             }
         },
         removeBehavior: function (behaviorName){
-            for( var i=0; i<behaviorNames.length; i++){
-                //if(behaviors[i])
+            delete behaviors[behaviorName];
+        },
+        hasBehavior: function(behaviorName){
+            if(behaviors[behaviorName] == undefined){
+                return false;
             }
+            return true;
         },
         setVisible: function(isVisible){
             visible=isVisible;
@@ -332,6 +369,34 @@ var JasperBehaviorManager = (function(){
                 }
             }
 
+        },
+
+        createBehavior: function(behaviorName, contents){
+            if(typeof (behaviorName) == "string"){
+                if( hasOwnProperty(Name_Beh,behaviorName) ){
+                    console.log("Behavior name already present : "+behaviorName);
+                    return null;
+                }
+                else{
+                    //contents.class = "JasperBehavior";
+                    Name_Beh[behaviorName] = (function(){
+                        var con = contents();
+                        con.class = "JasperBehavior";
+                        return con;
+                    });
+
+                    return behaviorName;
+                }
+            }
+        }
+
+
+        //Debug functions:
+        ,getAllBehaviors: function(){
+            var behNames = [];
+            for (name in Name_Beh)
+                behNames.push(name);
+            return behNames;
         }
 
     }
@@ -381,7 +446,11 @@ var CircleDrawBehavior = (function(){
     var rad = 0;
     var strokeColor = 'black';
     var strokeWidth = 5;
-    var fillColor = 'black';
+    var fillColorR = 0;
+    var fillColorG = 0;
+    var fillColorB = 0;
+    var fillColorA = 1;
+
     var fill = true;
     var stroke = true;
 
@@ -393,8 +462,15 @@ var CircleDrawBehavior = (function(){
             rad=radius;
             return this;
         },
-        setFillColor: function(color){
-            fillColor = color;
+        setFillColor: function(r,g,b,a){
+            fillColorR=r;
+            fillColorG=g;
+            fillColorB=b;
+
+            if(a != undefined){
+                this.getParentObject().setAlpha(a);
+                fillColorA=a;
+            }
             return this;
         },
         setFillEnabled: function(boolean){
@@ -409,15 +485,17 @@ var CircleDrawBehavior = (function(){
             strokeWidth=width;
             return this;
         },
-        update: function(dt){},
+        update: function(dt){
+
+        },
 
         render:function(ctx){
             parent = this.getParentObject();
             ctx.beginPath();
 
-            ctx.arc(parent.getPosX(), parent.getPosY(), rad, 0, 2 * Math.PI, true);
+            ctx.arc(Math.floor(parent.getPosX()), Math.floor(parent.getPosY()), rad, 0, 2 * Math.PI, true);
             if(fill){
-                ctx.fillStyle = fillColor;
+                ctx.fillStyle = "rgba("+fillColorR+","+fillColorG+","+fillColorB+","+parent.getAlpha()+")";
                 ctx.fill();
             }
             if(stroke){
@@ -448,3 +526,39 @@ if ( Object.prototype.hasOwnProperty ) {
         return obj.hasOwnProperty(prop);
     }
 }
+
+var JasperMouse = ((function(){
+    return{
+        mouseX:0,
+        mouseY:0,
+        funs:[],
+
+        getMousePos: function(){
+            return [this.mouseX,this.mouseY];
+        },
+        setMousePos: function(x,y){
+            this.mouseX=x;
+            this.mouseY=y;
+        },
+        mouseMove: function(e)
+        {
+            if(e.offsetX) {
+                JasperMouse.setMousePos(e.offsetX, e.offsetY);
+            }
+            else if(e.layerX) {
+                JasperMouse.setMousePos(e.layerX, e.layerY);
+            }
+        },
+        mouseDown: function(e){
+            console.log("inside click");
+            console.log(this.funs);
+
+        },
+        onMouseDown: function(fun){
+            console.log(fun);
+            this.funs.push(fun);
+            console.log(this.funs);
+        }
+
+        }
+})());

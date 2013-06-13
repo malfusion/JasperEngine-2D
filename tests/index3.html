@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div id="container"></div>
+<script src="../js/engine.js"></script>
+<script>
+    var gameCore = JasperCore();
+    gameCore.init({
+        width: 500,
+        height: 500
+    });
+
+    var mainScene = JasperScene('main');
+    gameCore.addScene(mainScene);
+    gameCore.startScene(mainScene);
+
+    setTimeout(function(){
+        var layer0 = JasperLayer();
+        mainScene.addLayer(layer0);
+
+
+       strangers=[] ;
+
+        var attract = gameCore.createBehavior("attract",function(){
+            return{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var dist = Math.sqrt(Math.pow(JasperMouse.getMousePos()[0]-parent.getPosX(),2)+Math.pow(JasperMouse.getMousePos()[1]-parent.getPosY(),2));
+
+                    // console.log((JasperMouse.getMousePos()[0]-parent.getPosX()));
+                    parent.setPosX(parent.getPosX() + ((JasperMouse.getMousePos()[0]-parent.getPosX())/dist));
+                    parent.setPosY(parent.getPosY() + (JasperMouse.getMousePos()[1]-parent.getPosY())/dist*2.0);
+                    //parent.setPos(JasperMouse.getMousePos()[0],JasperMouse.getMousePos()[1]);
+                }
+            }
+        });
+        var repel = gameCore.createBehavior("repel",function(){
+            return{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var dist = Math.sqrt(Math.pow(JasperMouse.getMousePos()[0]-parent.getPosX(),2)+Math.pow(JasperMouse.getMousePos()[1]-parent.getPosY(),2));
+                    parent.setPosX(parent.getPosX() - (JasperMouse.getMousePos()[0]-parent.getPosX())/dist*2.0);
+                    parent.setPosY(parent.getPosY() - (JasperMouse.getMousePos()[1]-parent.getPosY())/dist*2.0);
+                }
+            }
+        });
+
+        console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
+        for(i=0;i<10;i++){
+            for(j=0;j<10;j++){
+            var stranger = JasperObject("stranger");
+            stranger.setPos(i*50,j*50);
+            stranger.addBehavior("circle").setFillColor('red').setRadius(5).setStrokeWidth(1);
+            stranger.addBehavior("attract");
+            layer0.addObject(stranger);
+            strangers.push(stranger);
+            }
+        }
+    },1000);
+
+    document.getElementsByTagName('canvas')[0].onmousedown = function(){
+        console.log("click");
+        for(var i=0; i<strangers.length; i++){
+            stranger = strangers[i];
+            if(stranger.hasBehavior("attract")){
+                stranger.removeBehavior("attract");
+                stranger.addBehavior("repel");
+            }
+            else if(stranger.hasBehavior("repel")){
+                stranger.removeBehavior("repel");
+                stranger.addBehavior("attract");
+            }
+        }
+
+
+    };
+
+
+
+
+</script>
+</body>
+</html>
