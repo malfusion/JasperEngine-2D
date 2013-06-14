@@ -9,8 +9,8 @@
 <script>
     var gameCore = JasperCore();
     gameCore.init({
-        width: 500,
-        height: 500
+        width: 1000,
+        height: 1000
     });
 
     var mainScene = JasperScene('main');
@@ -59,24 +59,23 @@
             strangers.push(stranger);
             }
         }
+
+        for(var i=0; i<strangers.length; i++){
+            var strangeMouse = strangers[i].addBehavior("mouse");
+            strangeMouse.onClick = function(){
+                stranger=this.getParentObject();
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            };
+        }
     },1000);
 
-    document.getElementsByTagName('canvas')[0].onmousedown = function(){
-        console.log("click");
-        for(var i=0; i<strangers.length; i++){
-            stranger = strangers[i];
-            if(stranger.hasBehavior("attract")){
-                stranger.removeBehavior("attract");
-                stranger.addBehavior("repel");
-            }
-            else if(stranger.hasBehavior("repel")){
-                stranger.removeBehavior("repel");
-                stranger.addBehavior("attract");
-            }
-        }
-
-
-    };
 
 
 

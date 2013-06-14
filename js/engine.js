@@ -35,14 +35,18 @@ var JasperCore    = (function(){
     var activeScene;
     var lastTime;
     var canvas;
+    var __next_objid=1;
+
+    var canvasWidth;
+    var canvasHeight;
     //var core;
     //var behaviorManager;
 
     function createCanvas(width, height){
         canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.onmousemove = JasperMouse.mouseMove;
+        canvas.width = canvasWidth = width;
+        canvas.height = canvasHeight = height;
+        canvas.onmousemove = function(e){JasperMouse.mouseMove(e);};
         canvas.onmousedown = JasperMouse.mouseDown;
         canvas.onmouseup = JasperMouse.mouseUp;
         canvas.onclick = JasperMouse.mouseClick;
@@ -58,7 +62,7 @@ var JasperCore    = (function(){
 
         if(activeScene != undefined)
             if(activeScene.class == "JasperScene"){
-                canvasContext.clearRect(0,0,500,500);
+                canvasContext.clearRect(0,0,canvasWidth,canvasHeight);
                 activeScene.render(canvasContext);
             }
 
@@ -151,8 +155,17 @@ var JasperCore    = (function(){
         addBehaviorObjectPair: function(behaviorName, object){
            return Jasper.behaviorManager.addBehaviorToObject(behaviorName, object);
         },
+        deleteBehaviorObjectPair: function(behaviorName, object){
+            Jasper.behaviorManager.deleteBehaviorFromObject(behaviorName, object);
+        },
         createBehavior: function(behaviorName, behaviorContent){
             return Jasper.behaviorManager.createBehavior(behaviorName, behaviorContent)
+        },
+
+        objectId: function objectId(obj) {
+            if (obj==null) return null;
+            if (obj.__obj_id==null) obj.__obj_id=__next_objid++;
+            return obj.__obj_id;
         }
 
 
@@ -227,6 +240,7 @@ var JasperLayer=(function(){
         },
         addObject: function(jasperObject){
             if(jasperObject.class == "JasperObject"){
+                Jasper.core.objectId(jasperObject);
                 objects.push(jasperObject);
                 numObjects++;
             }
@@ -302,14 +316,13 @@ var JasperObject = (function(objectName){
         addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
             if(typeof (behaviorName) == "string"){
                 var behavior = Jasper.core.addBehaviorObjectPair(behaviorName, this);
-                console.log(behavior);
+
                 if(behavior.class == "JasperBehavior"){
 
                     behavior.parentObject = this;
                     behavior.getParentObject = function(){
                         return this.parentObject;
                     }
-
                     if(Jasper.behaviorManager.isNonUpdateBehavior(behaviorName)){
                         console.log("extra behavior found:" +behaviorName);
                         extraBehaviors[behaviorName] = behavior;
@@ -329,7 +342,9 @@ var JasperObject = (function(objectName){
             }
         },
         removeBehavior: function (behaviorName){
+            Jasper.core.deleteBehaviorObjectPair(behaviorName,this);
             delete behaviors[behaviorName];
+
         },
         hasBehavior: function(behaviorName){
             if(behaviors[behaviorName] == undefined){
@@ -362,9 +377,17 @@ var JasperObject = (function(objectName){
 
         update: function(dt){
             //console.log(name);
-            for (behavior in behaviors){
+            for (var behavior in behaviors){
                 //console.log(name+" : "+behavior);
-                behaviors[behavior].update(dt);
+                //try{
+                    behaviors[behavior].update(dt);
+                //}
+                /*catch(e){
+                    console.log(behavior);
+                    for(var b in this.getExtraBehaviors())
+                    console.log(i);
+                }*/
+
             }
         },
         render: function(ctx){
@@ -379,6 +402,9 @@ var JasperObject = (function(objectName){
         ,getExtraBehaviors: function(){
             return extraBehaviors;
         }
+        ,getALLBehaviors: function(){
+            return behaviors;
+        }
     }
 });
 
@@ -391,7 +417,9 @@ var JasperBehaviorManager = (function(){
         'testmove': RandomMoveBehavior,
         'mouse': MouseBehavior
     };
+
     var nonUpdateBehaviors = ['mouse'];
+
     return{
         class: 'JasperBehaviorManager',
 
@@ -403,9 +431,12 @@ var JasperBehaviorManager = (function(){
                 if( hasOwnProperty(Name_Beh,behaviorName) ){
 
                     var behavior = Name_Beh[behaviorName]();
-                    beh_BehObjPairs[behaviorName] = [behavior,object];
+                    if(beh_BehObjPairs[behaviorName] == undefined){
+                        beh_BehObjPairs[behaviorName] = [];
+                    }
+                    beh_BehObjPairs[behaviorName].push([behavior,object]);
                     console.log("returning behavior");
-                    if(type(behavior.init) == "undefined"){
+                    if(typeof (behavior.init) == "undefined"){
                         behavior.init = function(object){};
                     }
                     behavior.init(object);                                      //TODO: Add behavior init functionality for each behavior
@@ -439,10 +470,22 @@ var JasperBehaviorManager = (function(){
                 }
             }
         },
+        deleteBehaviorFromObject: function(behaviorName, object){
+            if(beh_BehObjPairs[behaviorName] != undefined){
+                var len = beh_BehObjPairs[behaviorName].length;
+                for(var i=0; i<len; i++){
+                    if(beh_BehObjPairs[behaviorName][i][1].__obj_id == object.__obj_id){
+                        beh_BehObjPairs[behaviorName].splice(i,1);
+                        return;
+                    }
+                }
+            }
+        },
 
         isNonUpdateBehavior: function(behaviorName){
-            for(var behavior in nonUpdateBehaviors){
-                if(behavior == behaviorName)
+            var len = nonUpdateBehaviors.length;
+            for(var i=0; i<len; i++){
+                if(nonUpdateBehaviors[i] == behaviorName)
                     return true;
             }
             return false;
@@ -459,6 +502,10 @@ var JasperBehaviorManager = (function(){
                 behNames.push(name);
             return behNames;
         }
+        ,getBehArray: function(){
+            return beh_BehObjPairs;
+        }
+
 
     }
 });
@@ -568,15 +615,16 @@ var MouseBehavior = (function(){
 
 
     return {
+        class:"JasperBehavior",
         init: function(object){
             Jasper.behaviorManager.addNonUpdateBehavior('mouse');
-            JasperMouse.registerCallbackObject(this.getParentObject());
+            JasperMouse.registerCallbackObject(object);
         },
-        onClick: undefined,
-        onMove: undefined,
-        onDown: undefined,
-        onUp: undefined,
-        onDblClick: undefined
+        onClick: function(){},
+        onMove: function(){},
+        onDown: function(){},
+        onUp: function(){},
+        onDblClick: function(){}
     }
 })
 
@@ -636,23 +684,24 @@ var JasperMouse = ((function(){
         */
         mouseMove: function(e){
             this.setMousePos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
-            events.push('onMove',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push(['onMove',(e.layerX || e.offsetX),(e.layerY || e.offsetY)]);
 
         },
         mouseClick:function(e){
-            events.push('onClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            console.log("inside mouseClick");
+            events.push(['onClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY)]);
         },
         mouseDblClick: function(e){
             console.log("inside mouseDblClick");
-            events.push('onDblClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push(['onDblClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY)]);
         },
         mouseUp: function(e){
             console.log("inside mouseUp");
-            events.push('onUp',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push(['onUp',(e.layerX || e.offsetX),(e.layerY || e.offsetY)]);
         },
         mouseDown: function(e){
             console.log("inside mouseDown");
-            events.push('onDown',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push(['onDown',(e.layerX || e.offsetX),(e.layerY || e.offsetY)]);
         },
 
 
@@ -672,18 +721,19 @@ var JasperMouse = ((function(){
         activateCallbacks: function(){
             var len = callbackObjects.length;
             var evs = events.length;
-
             for(var i=0; i<evs; i++){
                 var e = events[i][0];
                 var x = events[i][1];
                 var y = events[i][2];
 
-                for(var j=0; j<object; j++){
-                    callbackObjects[j][e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
+                for(var j=0; j<len; j++){
+                    callbackObjects[j].getBehavior("mouse")[e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
+
                 }
-                //Clear the events array
-                events.length=0;
+
             }
+            //Clear the events array
+            events.length=0;
         }
 
 
