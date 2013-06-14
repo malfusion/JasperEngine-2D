@@ -15,6 +15,13 @@
  *
   */
 
+
+var fileref=document.createElement('script')
+fileref.setAttribute("type","text/javascript")
+fileref.setAttribute("src", "js/keyboard.js")
+
+
+
 var showFps = false;
 var Jasper = {};
 
@@ -36,6 +43,11 @@ var JasperCore    = (function(){
         canvas.width = width;
         canvas.height = height;
         canvas.onmousemove = JasperMouse.mouseMove;
+        canvas.onmousedown = JasperMouse.mouseDown;
+        canvas.onmouseup = JasperMouse.mouseUp;
+        canvas.onclick = JasperMouse.mouseClick;
+        canvas.ondblclick = JasperMouse.mouseDblClick;
+
         //canvas.onmousedown = JasperMouse.mouseDown;
 
         document.getElementById('container').appendChild(canvas);
@@ -67,6 +79,7 @@ var JasperCore    = (function(){
         if(activeScene != undefined)
             if(activeScene.class == "JasperScene")
                 activeScene.update(elapsedTime);
+        JasperMouse.activateCallbacks();
         render();
 
     }
@@ -246,6 +259,7 @@ var JasperLayer=(function(){
 
 var JasperObject = (function(objectName){
     var behaviors={};
+    var extraBehaviors={};
     var rendererBehavior;
     var visible = false;
     var posX = 0;
@@ -290,15 +304,24 @@ var JasperObject = (function(objectName){
                 var behavior = Jasper.core.addBehaviorObjectPair(behaviorName, this);
                 console.log(behavior);
                 if(behavior.class == "JasperBehavior"){
-                    behaviors[behaviorName]=behavior;
+
                     behavior.parentObject = this;
                     behavior.getParentObject = function(){
                         return this.parentObject;
                     }
-                    if(hasOwnProperty(behavior,'render')){
-                        if(typeof(behavior.render) == "function"){
-                            console.log("renderer found");
-                            rendererBehavior = behavior;
+
+                    if(Jasper.behaviorManager.isNonUpdateBehavior(behaviorName)){
+                        console.log("extra behavior found:" +behaviorName);
+                        extraBehaviors[behaviorName] = behavior;
+                    }
+                    else{
+                        behaviors[behaviorName]=behavior;
+
+                        if(hasOwnProperty(behavior,'render')){
+                            if(typeof(behavior.render) == "function"){
+                                console.log("renderer found");
+                                rendererBehavior = behavior;
+                            }
                         }
                     }
                     return behavior;
@@ -320,6 +343,9 @@ var JasperObject = (function(objectName){
         isVisible: function(){
             return visible;
         },
+
+
+
         update: function(dt){
             //console.log(name);
             for (behavior in behaviors){
@@ -335,7 +361,10 @@ var JasperObject = (function(objectName){
             rendererBehavior = behaviors[rendererBehaviorName];
         }
 
-
+        //DEBUG
+        ,getExtraBehaviors: function(){
+            return extraBehaviors;
+        }
     }
 });
 
@@ -345,11 +374,14 @@ var JasperBehaviorManager = (function(){
     var Name_Beh={
         //'move': MoveBehavior,
         'circle': CircleDrawBehavior,
-        'testmove': RandomMoveBehavior
+        'testmove': RandomMoveBehavior,
+        'mouse': MouseBehavior
     };
-
+    var nonUpdateBehaviors = ['mouse'];
     return{
         class: 'JasperBehaviorManager',
+
+
 
         //Could be behavior NAME ////////////NOT SURE: or JasperBEhavior Object
         addBehaviorToObject: function(behaviorName, object){
@@ -359,6 +391,10 @@ var JasperBehaviorManager = (function(){
                     var behavior = Name_Beh[behaviorName]();
                     beh_BehObjPairs[behaviorName] = [behavior,object];
                     console.log("returning behavior");
+                    if(type(behavior.init) == "undefined"){
+                        behavior.init = function(object){};
+                    }
+                    behavior.init(object);                                      //TODO: Add behavior init functionality for each behavior
                     return behavior;
                 }
                 else{
@@ -388,8 +424,19 @@ var JasperBehaviorManager = (function(){
                     return behaviorName;
                 }
             }
-        }
+        },
 
+        isNonUpdateBehavior: function(behaviorName){
+            for(var behavior in nonUpdateBehaviors){
+                if(behavior == behaviorName)
+                    return true;
+            }
+            return false;
+        },
+        addNonUpdateBehavior: function(behaviorName){
+            if(!this.isNonUpdateBehavior(behaviorName))
+                nonUpdateBehaviors.push(behaviorName);
+        }
 
         //Debug functions:
         ,getAllBehaviors: function(){
@@ -401,14 +448,7 @@ var JasperBehaviorManager = (function(){
 
     }
 });
-window.requestAnimFrame = (function(){
-    return  window.requestAnimationFrame       ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame    ||
-        function( callback ){
-            window.setTimeout(callback, 1000 / 60);
-        };
-})();
+
 
 // Must define "class":"JasperBehavior" when creating behaviour
 
@@ -510,6 +550,141 @@ var CircleDrawBehavior = (function(){
     }
 });
 
+var MouseBehavior = (function(){
+
+
+    return {
+        init: function(object){
+            Jasper.behaviorManager.addNonUpdateBehavior('mouse');
+            JasperMouse.add
+        },
+        onClick: undefined,
+        onMove: undefined,
+        onDown: undefined,
+        onUp: undefined,
+        onDblClick: undefined
+    }
+})
+
+
+var JasperMouse = ((function(){
+
+    var clickX=0;
+    var clickY=0;
+    var downX=0;
+    var downY=0;
+    var upX=0;
+    var upY=0;
+    var dblclickX=0;
+    var dblclickY=0;
+
+    var isDown=false;
+    var isUp=false;
+    var isClick=false;
+    var dblClick=false;
+    var move=false;
+
+    var callbackObjects = [];
+
+    function existsCallbackObject(object){
+        var len = callbackObjects.length;
+        for (var i=0; i<len; i++){
+            if(object == callbackObjects[i])
+                return i;
+        }
+        return -1;
+    }
+
+    return{
+
+        mouseX:0,
+        mouseY:0,
+
+        getMousePos: function(){
+            return [this.mouseX,this.mouseY];
+        },
+        setMousePos: function(x,y){
+            this.mouseX=x;
+            this.mouseY=y;
+        },
+
+        setClickPos: function(x,y){
+            clickX=x;
+            clickY=y;
+        },
+        setDblClickPos: function(x,y){
+            dblclickX=x;
+            dblclickY=y;
+        },
+        setUpPos: function(x,y){
+            upX=x;
+            upY=y;
+        },
+        setDownPos: function(x,y){
+            downX=x;
+            downY=y;
+        },
+
+        mouseMove: function(e){
+            this.setMousePos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+
+        },
+        mouseClick:function(e){
+            console.log("inside mouseClick");
+            this.setClickPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+        },
+        mouseDblClick: function(e){
+            console.log("inside mouseDblClick");
+            this.setDblClickPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+        },
+        mouseUp: function(e){
+            console.log("inside mouseUp");
+            this.setUpPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+        },
+        mouseDown: function(e){
+            console.log("inside mouseDown");
+            this.setDownPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+        },
+
+
+
+
+        registerCallbackObject: function(object){
+            if(existsCallbackObject(object) == -1){
+                callbackObjects.push(object);
+            }
+        },
+        removeCallbackObject: function(object){
+            var pos = existsCallbackObject(object);
+            if(pos != -1){
+                callbackObjects.splice(pos,1);
+            }
+        },
+        activateCallbacks: function(){
+            var len = callbackObjects.length;;
+            for(var i=0; i<len; i++){
+
+            }
+        }
+
+
+
+        }
+})());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //HELPERS
@@ -527,38 +702,14 @@ if ( Object.prototype.hasOwnProperty ) {
     }
 }
 
-var JasperMouse = ((function(){
-    return{
-        mouseX:0,
-        mouseY:0,
-        funs:[],
 
-        getMousePos: function(){
-            return [this.mouseX,this.mouseY];
-        },
-        setMousePos: function(x,y){
-            this.mouseX=x;
-            this.mouseY=y;
-        },
-        mouseMove: function(e)
-        {
-            if(e.offsetX) {
-                JasperMouse.setMousePos(e.offsetX, e.offsetY);
-            }
-            else if(e.layerX) {
-                JasperMouse.setMousePos(e.layerX, e.layerY);
-            }
-        },
-        mouseDown: function(e){
-            console.log("inside click");
-            console.log(this.funs);
+//Initiator
 
-        },
-        onMouseDown: function(fun){
-            console.log(fun);
-            this.funs.push(fun);
-            console.log(this.funs);
-        }
-
-        }
-})());
+window.requestAnimFrame = (function(){
+    return  window.requestAnimationFrame       ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame    ||
+        function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+        };
+})();
