@@ -337,6 +337,20 @@ var JasperObject = (function(objectName){
             }
             return true;
         },
+        hasExtraBehavior: function(behaviorName){
+            if(extraBehaviors[behaviorName] == undefined){
+                return false;
+            }
+            return true;
+        },
+        getBehavior: function(behaviorName){
+            if(this.hasBehavior(behaviorName))
+                return behaviors[behaviorName];
+            else {
+                if(this.hasExtraBehavior(behaviorName))
+                    return extraBehaviors[behaviorName];
+            }
+        },
         setVisible: function(isVisible){
             visible=isVisible;
         },
@@ -556,7 +570,7 @@ var MouseBehavior = (function(){
     return {
         init: function(object){
             Jasper.behaviorManager.addNonUpdateBehavior('mouse');
-            JasperMouse.add
+            JasperMouse.registerCallbackObject(this.getParentObject());
         },
         onClick: undefined,
         onMove: undefined,
@@ -569,7 +583,7 @@ var MouseBehavior = (function(){
 
 var JasperMouse = ((function(){
 
-    var clickX=0;
+    /*var clickX=0;
     var clickY=0;
     var downX=0;
     var downY=0;
@@ -577,13 +591,8 @@ var JasperMouse = ((function(){
     var upY=0;
     var dblclickX=0;
     var dblclickY=0;
-
-    var isDown=false;
-    var isUp=false;
-    var isClick=false;
-    var dblClick=false;
-    var move=false;
-
+                     */
+    var events = [];
     var callbackObjects = [];
 
     function existsCallbackObject(object){
@@ -607,7 +616,7 @@ var JasperMouse = ((function(){
             this.mouseX=x;
             this.mouseY=y;
         },
-
+        /*
         setClickPos: function(x,y){
             clickX=x;
             clickY=y;
@@ -624,26 +633,26 @@ var JasperMouse = ((function(){
             downX=x;
             downY=y;
         },
-
+        */
         mouseMove: function(e){
             this.setMousePos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push('onMove',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
 
         },
         mouseClick:function(e){
-            console.log("inside mouseClick");
-            this.setClickPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push('onClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
         },
         mouseDblClick: function(e){
             console.log("inside mouseDblClick");
-            this.setDblClickPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push('onDblClick',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
         },
         mouseUp: function(e){
             console.log("inside mouseUp");
-            this.setUpPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push('onUp',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
         },
         mouseDown: function(e){
             console.log("inside mouseDown");
-            this.setDownPos((e.layerX || e.offsetX),(e.layerY || e.offsetY));
+            events.push('onDown',(e.layerX || e.offsetX),(e.layerY || e.offsetY));
         },
 
 
@@ -661,9 +670,19 @@ var JasperMouse = ((function(){
             }
         },
         activateCallbacks: function(){
-            var len = callbackObjects.length;;
-            for(var i=0; i<len; i++){
+            var len = callbackObjects.length;
+            var evs = events.length;
 
+            for(var i=0; i<evs; i++){
+                var e = events[i][0];
+                var x = events[i][1];
+                var y = events[i][2];
+
+                for(var j=0; j<object; j++){
+                    callbackObjects[j][e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
+                }
+                //Clear the events array
+                events.length=0;
             }
         }
 
