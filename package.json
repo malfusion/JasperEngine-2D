@@ -1,0 +1,26 @@
+{
+  "name": "JasperEngine",
+  "version": "1.0.0",
+  "description": "2d game engine",
+  "main": "index.js",
+  "dependencies": {
+    "grunt": "~0.4.1"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1"
+  },
+  "scripts": {
+    "test": "jaspertest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/judenaveenraj/JasperEngine-2D.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "README",
+  "gitHead": "4362556227a84da5015f807dab916a04e7b8f4fb",
+  "bugs": {
+    "url": "https://github.com/judenaveenraj/JasperEngine-2D/issues"
+  }
+}

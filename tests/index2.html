@@ -5,49 +5,49 @@
 </head>
 <body>
 <div id="container"></div>
-<script src="../js/engine.js"></script>
+<script src="../dist/JasperEngine.js"></script>
 <script>
-    var gameCore = JasperCore();
+    var gameCore = new Jasper.Core();
     gameCore.init({
         width: 500,
         height: 500
     });
 
-    var mainScene = JasperScene('main');
+    var mainScene = new Jasper.Scene('main');
     gameCore.addScene(mainScene);
     gameCore.startScene(mainScene);
 
     setTimeout(function(){
-        var layer0 = JasperLayer();
+        var layer0 = new Jasper.Layer();
         mainScene.addLayer(layer0);
 
-        var hero = JasperObject('hero');
+        var hero = new Jasper.Object('hero');
         var circleBeh = hero.addBehavior("circle");
         circleBeh.setFillColor(0,255,0,1);
         circleBeh.setRadius(50);
         layer0.addObject(hero);
 
-        var vill = JasperObject('villain');
+        var vill = new Jasper.Object('villain');
         var circleBeh = vill.addBehavior("circle");
         vill.addBehavior("testmove");
 
-        var disappear = gameCore.createBehavior("disappear",function(){
-            //class:
-            return{
-                time: 20000,
-                elapsed:0,
-                update: function(dt){
-                    this.elapsed+=dt;
+        var disappear = gameCore.createBehavior("disappear",{
+            time: 20000,
+            elapsed:0
+        },
+        {
+            update: function(dt){
+                this.elapsed+=dt;
 //                    console.log("alphab:"+this.getParentObject().getAlpha());
 
-                    if(this.elapsed < this.time){
-                        parent=this.getParentObject();
-                        parent.setAlpha(1-(this.elapsed/this.time*1.0));
+                if(this.elapsed < this.time){
+                    parent=this.getParentObject();
+                    parent.setAlpha(1-(this.elapsed/this.time*1.0));
 //                        console.log("alphab:"+parent.getAlpha());
-                    }
-
                 }
+
             }
+
         });
           /*
           * INSTEAD ALSO ALLOW RETURN OF OBJECT WITHOUT PRIVATE VARIABLES
@@ -71,17 +71,17 @@
            });
            *
            */
-        console.log(vill.addBehavior("disappear"));
-        console.log("create: "+disappear );
-        console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
+        //console.log(vill.addBehavior("disappear"));
+        //console.log("create: "+disappear );
+        //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
 
         circleBeh.setFillColor(0,0,255,1);
         circleBeh.setRadius(50);
         layer0.addObject(vill);
 
-        for(var i=0; i<50;i++){
-        var vill = JasperObject('villain');
-            vill.addBehavior("disappear")
+        for(var i=0; i<1000;i++){
+        var vill = new Jasper.Object('villain');
+        //    vill.addBehavior("disappear")
         vill.addBehavior("circle").setFillColor('blue').setRadius(10).setStrokeWidth();
         vill.addBehavior("testmove");
         layer0.addObject(vill);

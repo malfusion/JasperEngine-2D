@@ -5,53 +5,56 @@
 </head>
 <body>
 <div id="container"></div>
-<script src="../js/engine.js"></script>
+<script src="../dist/JasperEngine.js"></script>
+
+
 <script>
-    var gameCore = JasperCore();
+    var gameCore = new Jasper.Core();
     gameCore.init({
         width: 1000,
         height: 1000
     });
 
-    var mainScene = JasperScene('main');
+    var mainScene = new Jasper.Scene('main');
     gameCore.addScene(mainScene);
     gameCore.startScene(mainScene);
 
     setTimeout(function(){
-        var layer0 = JasperLayer();
+        var layer0 = new Jasper.Layer();
         mainScene.addLayer(layer0);
 
 
        strangers=[] ;
+       var mouseManager = gameCore.getMouseManager();
 
-        var attract = gameCore.createBehavior("attract",function(){
-            return{
+        var attract = gameCore.createBehavior("attract",{},{
                 update: function(dt){
                     parent=this.getParentObject();
-                    var dist = Math.sqrt(Math.pow(JasperMouse.getMousePos()[0]-parent.getPosX(),2)+Math.pow(JasperMouse.getMousePos()[1]-parent.getPosY(),2));
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
 
-                    // console.log((JasperMouse.getMousePos()[0]-parent.getPosX()));
-                    parent.setPosX(parent.getPosX() + ((JasperMouse.getMousePos()[0]-parent.getPosX())/dist));
-                    parent.setPosY(parent.getPosY() + (JasperMouse.getMousePos()[1]-parent.getPosY())/dist*2.0);
-                    //parent.setPos(JasperMouse.getMousePos()[0],JasperMouse.getMousePos()[1]);
+
+                    parent.setPosX(parent.getPosX() + ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() + ((mousePos[1]-parent.getPosY())/dist*2.0));
                 }
-            }
+
         });
-        var repel = gameCore.createBehavior("repel",function(){
-            return{
+        var repel = gameCore.createBehavior("repel",{},{
                 update: function(dt){
                     parent=this.getParentObject();
-                    var dist = Math.sqrt(Math.pow(JasperMouse.getMousePos()[0]-parent.getPosX(),2)+Math.pow(JasperMouse.getMousePos()[1]-parent.getPosY(),2));
-                    parent.setPosX(parent.getPosX() - (JasperMouse.getMousePos()[0]-parent.getPosX())/dist*2.0);
-                    parent.setPosY(parent.getPosY() - (JasperMouse.getMousePos()[1]-parent.getPosY())/dist*2.0);
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
+
+                    parent.setPosX(parent.getPosX() - ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() - ((mousePos[1]-parent.getPosY())/dist*2.0));
                 }
-            }
+
         });
 
-        console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
+        //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
         for(i=0;i<10;i++){
             for(j=0;j<10;j++){
-            var stranger = JasperObject("stranger");
+            var stranger = new Jasper.Object("stranger");
             stranger.setPos(i*50,j*50);
             stranger.addBehavior("circle").setFillColor('red').setRadius(5).setStrokeWidth(1);
             stranger.addBehavior("attract");
@@ -81,5 +84,9 @@
 
 
 </script>
+
+
+
+
 </body>
 </html>
