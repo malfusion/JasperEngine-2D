@@ -786,6 +786,13 @@ Jasper.Mouse = function(){
     var dblclickY=0;
                      */
     this._events = [];
+    this._onClickObjects = [];
+    this._onMoveObjects = [];
+    this._onDownObjects = [];
+    this._onUpObjects = [];
+    this._onDblClickObjects = [];
+
+
     this._callbackObjects = [];
     this._mousePos = [];
 };
@@ -811,24 +818,7 @@ Jasper.Mouse.prototype={
         setMousePos: function(x,y){
             this._mousePos=[x,y];
         },
-        /*
-        setClickPos: function(x,y){
-            clickX=x;
-            clickY=y;
-        },
-        setDblClickPos: function(x,y){
-            dblclickX=x;
-            dblclickY=y;
-        },
-        setUpPos: function(x,y){
-            upX=x;
-            upY=y;
-        },
-        setDownPos: function(x,y){
-            downX=x;
-            downY=y;                                
-        },
-        */
+
         mouseMove: function(e){
             this.setMousePos(/*(e.layerX || e.offsetX),(e.layerY || e.offsetY)*/e.offsetX,e.offsetY);
             this._events.push(['onMove',/*(e.layerX || e.offsetX),(e.layerY || e.offsetY)*/e.offsetX,e.offsetY]);
@@ -853,32 +843,115 @@ Jasper.Mouse.prototype={
 
 
 
+        registerOnClickObject: function(obj){
+            if(obj instanceof Jasper.Object)
+                this._onClickObjects.push(obj);
 
-        registerCallbackObject: function(object){
-            if(this._existsCallbackObject(object) == -1){
-                this._callbackObjects.push(object);
+        },
+        registerOnMoveObject: function(obj){
+            if(obj instanceof Jasper.Object)
+                this._onMoveObjects.push(obj);
+        },
+        registerOnDownObject: function(obj){
+            if(obj instanceof Jasper.Object)
+                this._onDownObjects.push(obj);
+        },
+        registerOnUpObject: function(obj){
+            if(obj instanceof Jasper.Object)
+                this._onUpObjects.push(obj);
+        },
+        registerOnDblClickObject: function(obj){
+            if(obj instanceof Jasper.Object)
+                this._onDblClickObjects.push(obj);
+        },
+        unregisterOnClickObject: function(obj){
+            if(obj instanceof Jasper.Object){
+                var len = this._onClickObjects.length;
+                for(var i=0; i<len; i++){
+                    if(this._onClickObjects[i]==object){
+                        this._onClickObjects.splice(i,1);
+                        break;
+                    }
+                }
             }
         },
-        removeCallbackObject: function(object){
-            var pos = this._existsCallbackObject(object);
+        unregisterOnMoveObject: function(obj){
+            if(obj instanceof Jasper.Object){
+                var len = this._onMoveObjects.length;
+                for(var i=0; i<len; i++){
+                    if(this._onClickObjects[i]==object){
+                        this._onMoveObjects.splice(i,1);
+                        break;
+                    }
+                }
+            }
+        },
+        unregisterOnDownObject: function(obj){
+            if(obj instanceof Jasper.Object){
+                var len = this._onDownObjects.length;
+                for(var i=0; i<len; i++){
+                    if(this._onClickObjects[i]==object){
+                        this._onDownObjects.splice(i,1);
+                        break;
+                    }
+                }
+            }
+        },
+        unregisterOnUpObject: function(obj){
+            if(obj instanceof Jasper.Object){
+                var len = this._onUpObjects.length;
+                for(var i=0; i<len; i++){
+                    if(this._onClickObjects[i]==object){
+                        this._onUpObjects.splice(i,1);
+                        break;
+                    }
+                }
+            }
+        },
+        unregisterOnDblClickObject: function(obj){
+            if(obj instanceof Jasper.Object){
+                var len = this._onDblClickObjects.length;
+                for(var i=0; i<len; i++){
+                    if(this._onClickObjects[i]==object){
+                        this._onDblClickObjects.splice(i,1);
+                        break;
+                    }
+                }
+            }
+        },
+
+
+
+        registerCallbackObject: function(obj){
+            if(this._existsCallbackObject(obj) == -1){
+                this._callbackObjects.push(obj);
+            }
+        },
+        removeCallbackObject: function(obj){
+            var pos = this._existsCallbackObject(obj);
             if(pos != -1){
                 this._callbackObjects.splice(pos,1);
             }
         },
         _activateCallbacks: function(){
-            var len = this._callbackObjects.length;
+            var len = 0;
             var evs = this._events.length;
             for(var i=0; i<evs; i++){
                 var e = this._events[i][0];
                 var x = this._events[i][1];
                 var y = this._events[i][2];
-                
+
+                var objs = this["_"+e+"Objects"];
+                len = objs.length;
+                console.log("Processed: "+len+ "_"+e+"Objects");
                 for(var j=0; j<len; j++){
 
-                    this._callbackObjects[j].getBehavior("mouse")[e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
+                    //this._callbackObjects[j].getBehavior("mouse")[e](x,y); 
+                    objs[j].getBehavior("mouse")[e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
                 }
                 
-
+                
+                
             }
             //Clear the this._events array
             this._events.length=0;
@@ -968,7 +1041,9 @@ Object.extend(Jasper.CircleDrawBehavior.prototype, {
             return this;
         }
         
-});;Jasper.MouseBehavior = function(){};
+});;Jasper.MouseBehavior = function(){
+
+};
 
 Jasper.MouseBehavior.prototype = new Jasper.Behavior();
 
@@ -978,13 +1053,61 @@ Object.extend(Jasper.MouseBehavior.prototype,{
 
         init: function(object){
             Jasper._behaviorManager._addNonUpdateBehavior('mouse');
-            Jasper._mouseManager.registerCallbackObject(object);
+            //Jasper._mouseManager.registerCallbackObject(object);
         },
         onClick: function(){},
         onMove: function(){},
         onDown: function(){},
         onUp: function(){},
-        onDblClick: function(){}
+        onDblClick: function(){},
+
+        setOnClick: function(clickFun){
+			this.onClick = clickFun;
+			Jasper._mouseManager.registerOnClickObject(this.getParentObject());
+			return this;
+        },
+        setOnMove: function(clickFun){
+			this.onMove = clickFun;
+			Jasper._mouseManager.registerOnMoveObject(this.getParentObject());
+			return this;
+        },
+        setOnDown: function(clickFun){
+			this.onDown = clickFun;
+			Jasper._mouseManager.registerOnDownObject(this.getParentObject());
+			return this;
+        },
+        setOnUp: function(clickFun){
+			this.onUp = clickFun;
+			Jasper._mouseManager.registerOnUpObject(this.getParentObject());
+			return this;
+        },
+        setOnDblClick: function(clickFun){
+			this.onDblClick = clickFun;
+			Jasper._mouseManager.registerOnDblClickObject(this.getParentObject());
+			return this;
+        },
+
+        removeOnClick: function(){
+			delete this.onClick;
+			Jasper._mouseManager.unregisterOnClickObject(this.getParentObject());
+        },
+        removeOnMove: function(){
+			delete this.onMove;
+			Jasper._mouseManager.unregisterOnMoveObject(this.getParentObject());
+        },
+        removeOnDown: function(){
+			delete this.onDown;
+			Jasper._mouseManager.unregisterOnDownObject(this.getParentObject());
+        },
+        removeOnUp: function(){
+			delete this.onUp;
+			Jasper._mouseManager.unregisterOnUpObject(this.getParentObject());
+        },
+        removeOnDblClick: function(){
+			delete this.onDblClick;
+			Jasper._mouseManager.unregisterOnDblClickObject(this.getParentObject());
+        },
+
 
 });;Jasper.RandomMoveBehavior = function(){
     this.finalx = Math.floor((Math.random()*500)+1);

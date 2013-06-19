@@ -66,8 +66,19 @@
         }
 
         for(var i=0; i<strangers.length; i++){
-            var strangeMouse = strangers[i].addBehavior("mouse").setOnClick(function(){
+            var strangeMouse = strangers[i].addBehavior("mouse").setOnDown(function(){
             
+                stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            }).setOnUp(function(){
                 stranger=this.getParentObject();
                 console.log("HERERERERERE onclick :"+ i);
                 if(stranger.hasBehavior("attract")){
