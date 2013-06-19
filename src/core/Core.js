@@ -121,7 +121,7 @@ Jasper.Core.prototype = {
         },
         removeSceneByName: function(jasperSceneName){
             if(this.activeScene.getSceneName() == jasperSceneName){
-                console.log("Trying to remove currently active scene not permitted.")
+                console.log("Trying to remove currently active scene not permitted.");
                 return;
             }
             for (var i=0; i<this.scenes.length; i++){
@@ -160,7 +160,7 @@ Jasper.Core.prototype = {
 */
 createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
             var behaviorClass = Jasper.Behavior._createBehavior(behaviorVars, behaviorFuns);
-            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass)
+            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass);
         },
         setFps : function(engineFps){
                        fps=engineFps;

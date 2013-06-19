@@ -11,6 +11,7 @@ Jasper.BehaviorManager = function () {
     this._name_beh = {
         //'move': MoveBehavior,
         'circle': Jasper.CircleDrawBehavior,
+        'rect': Jasper.RectangleDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior
     };
@@ -28,7 +29,7 @@ Jasper.BehaviorManager.prototype = {
 
                 var behavior = new this._name_beh[behaviorName]();
 
-                if (this._beh_BehObjPairs[behaviorName] == undefined) {
+                if (this._beh_BehObjPairs[behaviorName] === undefined) {
                     this._beh_BehObjPairs[behaviorName] = [];
                 }
                 this._beh_BehObjPairs[behaviorName].push([behavior, object]);
@@ -64,7 +65,7 @@ Jasper.BehaviorManager.prototype = {
         }
     },
     _deleteBehaviorFromObject: function (behaviorName, object) {
-        if (this._beh_BehObjPairs[behaviorName] != undefined) {
+        if (this._beh_BehObjPairs[behaviorName] !== undefined) {
             var len = this._beh_BehObjPairs[behaviorName].length;
             for (var i = 0; i < len; i++) {
                 if (this._beh_BehObjPairs[behaviorName][i][1].__obj_id == object.__obj_id) {
@@ -86,14 +87,14 @@ Jasper.BehaviorManager.prototype = {
     _addNonUpdateBehavior: function (behaviorName) {
         if (!this._isNonUpdateBehavior(behaviorName))
             this._nonUpdateBehaviors.push(behaviorName);
-    }
+    },
 
     //Debug functions:
-    ,
+    
 
     _getAllBehaviors: function () {
         var behNames = [];
-        for (name in this._name_beh)
+        for (var name in this._name_beh)
             behNames.push(name);
         return behNames;
     },

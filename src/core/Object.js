@@ -9,7 +9,6 @@ Jasper.Object = function(objectName){
     this._id = Jasper.Object.ID++;
     this._layer = null;
 
-
     this._behaviors={};
     this._extraBehaviors={};
     this._rendererBehavior = null;
@@ -27,6 +26,7 @@ Jasper.Object = function(objectName){
 
 //    this.core : undefined;
     this._scene = null;
+
 
 };
 
@@ -49,8 +49,10 @@ Jasper.Object.prototype = {
         },
 
         _render: function(ctx){
-            if(this._rendererBehavior instanceof Jasper.Behavior){
+            if(this._rendererBehavior instanceof Jasper.RenderableBehavior){
+                this._rendererBehavior.renderBefore(ctx);
                 this._rendererBehavior.render(ctx);
+                this._rendererBehavior.renderAfter(ctx);
             }
 
         },
@@ -83,10 +85,8 @@ Jasper.Object.prototype = {
 
                 if(behavior instanceof Jasper.Behavior){
 
-                    behavior.parentObject = this;
-                    behavior.getParentObject = function(){
-                        return this.parentObject;
-                    }
+                    behavior._parent = this;
+                    
                     if(Jasper._behaviorManager._isNonUpdateBehavior(behaviorName)){
                         console.log("extra behavior found:" +behaviorName);
                         this._extraBehaviors[behaviorName] = behavior;
@@ -95,7 +95,7 @@ Jasper.Object.prototype = {
                         this._behaviors[behaviorName]=behavior;
 
                         /////////WILL IT WORK
-                        if(typeof(behavior.render) == "function"){
+                        if(behavior instanceof Jasper.RenderableBehavior){
                             console.log("renderer found");
                             this._rendererBehavior = behavior;
                         }
@@ -117,11 +117,11 @@ Jasper.Object.prototype = {
             
         },
         _hasNormalBehavior: function(behaviorName){
-            inNormalBehaviors = !(this._behaviors[behaviorName] == undefined)
+            inNormalBehaviors = (this._behaviors[behaviorName] !== undefined);
             return inNormalBehaviors;
         },
         _hasExtraBehavior: function(behaviorName){
-            inExtraBehaviors = !(this._extraBehaviors[behaviorName] == undefined)
+            inExtraBehaviors = (this._extraBehaviors[behaviorName] !== undefined);
             return inExtraBehaviors;
         },
         getBehavior: function(behaviorName){
@@ -143,14 +143,18 @@ Jasper.Object.prototype = {
 
         // Custom Renderer Behavior overwrites all older behaviors and can be used for dynamic rendering
         setObjectRenderer: function(rendererBehaviorName){
-            this._rendererBehavior = this._behaviors[rendererBehaviorName];
-        }
+            if(this._behaviors[rendererBehaviorName] instanceof Jasper.RendererBehavior)
+                this._rendererBehavior = this._behaviors[rendererBehaviorName];
+            else{
+                throw Error("Cannot add behavior "+rendererBehaviorName+" as objectRenderer. Not a RenderableBehavior" );
+            }
+        },
 
         //DEBUG
-        ,_getExtraBehaviors: function(){
+        _getExtraBehaviors: function(){
             return this._extraBehaviors;
-        }
-        ,_getAllBehaviors: function(){
+        },
+        _getAllBehaviors: function(){
             return this._behaviors;
         }
     

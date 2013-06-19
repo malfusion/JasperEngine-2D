@@ -25,7 +25,7 @@ function hasOwnProperty(obj, prop) {
 if ( Object.prototype.hasOwnProperty ) {
     var hasOwnProperty = function(obj, prop) {
         return obj.hasOwnProperty(prop);
-    }
+    };
 }
 
 
@@ -59,9 +59,7 @@ if (!Function.prototype.bind) {
             fToBind = this, 
             fNOP = function () {},
             fBound = function () {
-                return fToBind.apply(this instanceof fNOP && oThis
-                                     ? this
-                                     : oThis,
+                return fToBind.apply(this instanceof fNOP && oThis? this : oThis,
                                    aArgs.concat(Array.prototype.slice.call(arguments)));
             };
 
@@ -72,15 +70,52 @@ if (!Function.prototype.bind) {
   };
 }
 ;Jasper.Behavior = function(){
-
+	this._parent = null;
 	
 }; 
 
 Jasper.Behavior.prototype.init = function(){};
+Jasper.Behavior.prototype.update=function(){};
+Jasper.Behavior.prototype.getParentObject = function(){
+                        return this._parent;
+                    };
 
 
 Jasper.Behavior._createBehavior = function(varsObj, funsObj){
 	var temp = new Jasper.Behavior();
+	Object.extend(temp, funsObj);
+
+	var newBeh = function(){};
+	newBeh.prototype = temp;
+
+	Object.extend(newBeh.prototype, funsObj);
+    return newBeh;
+
+
+};
+
+///	RENDERABLE BEHAVIOR EXTENDING BEHAVIOR ///
+
+Jasper.RenderableBehavior = function(){
+
+	
+}; 
+
+Jasper.RenderableBehavior.prototype = new Jasper.Behavior();
+
+Jasper.RenderableBehavior.prototype.renderBefore = function(ctx){
+	ctx.save();
+};
+
+Jasper.RenderableBehavior.prototype.renderAfter = function(ctx){
+	ctx.restore();
+};
+
+Jasper.RenderableBehavior.prototype.render = function(){};
+
+
+Jasper.RenderableBehavior._createRenderBehavior = function(varsObj, funsObj){
+	var temp = new Jasper.RenderableBehavior();
 	Object.extend(temp, funsObj);
 
 	var newBeh = function(){};
@@ -103,6 +138,7 @@ Jasper.BehaviorManager = function () {
     this._name_beh = {
         //'move': MoveBehavior,
         'circle': Jasper.CircleDrawBehavior,
+        'rect': Jasper.RectangleDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior
     };
@@ -120,7 +156,7 @@ Jasper.BehaviorManager.prototype = {
 
                 var behavior = new this._name_beh[behaviorName]();
 
-                if (this._beh_BehObjPairs[behaviorName] == undefined) {
+                if (this._beh_BehObjPairs[behaviorName] === undefined) {
                     this._beh_BehObjPairs[behaviorName] = [];
                 }
                 this._beh_BehObjPairs[behaviorName].push([behavior, object]);
@@ -156,7 +192,7 @@ Jasper.BehaviorManager.prototype = {
         }
     },
     _deleteBehaviorFromObject: function (behaviorName, object) {
-        if (this._beh_BehObjPairs[behaviorName] != undefined) {
+        if (this._beh_BehObjPairs[behaviorName] !== undefined) {
             var len = this._beh_BehObjPairs[behaviorName].length;
             for (var i = 0; i < len; i++) {
                 if (this._beh_BehObjPairs[behaviorName][i][1].__obj_id == object.__obj_id) {
@@ -178,14 +214,14 @@ Jasper.BehaviorManager.prototype = {
     _addNonUpdateBehavior: function (behaviorName) {
         if (!this._isNonUpdateBehavior(behaviorName))
             this._nonUpdateBehaviors.push(behaviorName);
-    }
+    },
 
     //Debug functions:
-    ,
+    
 
     _getAllBehaviors: function () {
         var behNames = [];
-        for (name in this._name_beh)
+        for (var name in this._name_beh)
             behNames.push(name);
         return behNames;
     },
@@ -317,7 +353,7 @@ Jasper.Core.prototype = {
         },
         removeSceneByName: function(jasperSceneName){
             if(this.activeScene.getSceneName() == jasperSceneName){
-                console.log("Trying to remove currently active scene not permitted.")
+                console.log("Trying to remove currently active scene not permitted.");
                 return;
             }
             for (var i=0; i<this.scenes.length; i++){
@@ -356,7 +392,7 @@ Jasper.Core.prototype = {
 */
 createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
             var behaviorClass = Jasper.Behavior._createBehavior(behaviorVars, behaviorFuns);
-            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass)
+            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass);
         },
         setFps : function(engineFps){
                        fps=engineFps;
@@ -453,7 +489,6 @@ Jasper.Object = function(objectName){
     this._id = Jasper.Object.ID++;
     this._layer = null;
 
-
     this._behaviors={};
     this._extraBehaviors={};
     this._rendererBehavior = null;
@@ -471,6 +506,7 @@ Jasper.Object = function(objectName){
 
 //    this.core : undefined;
     this._scene = null;
+
 
 };
 
@@ -493,8 +529,10 @@ Jasper.Object.prototype = {
         },
 
         _render: function(ctx){
-            if(this._rendererBehavior instanceof Jasper.Behavior){
+            if(this._rendererBehavior instanceof Jasper.RenderableBehavior){
+                this._rendererBehavior.renderBefore(ctx);
                 this._rendererBehavior.render(ctx);
+                this._rendererBehavior.renderAfter(ctx);
             }
 
         },
@@ -527,10 +565,8 @@ Jasper.Object.prototype = {
 
                 if(behavior instanceof Jasper.Behavior){
 
-                    behavior.parentObject = this;
-                    behavior.getParentObject = function(){
-                        return this.parentObject;
-                    }
+                    behavior._parent = this;
+                    
                     if(Jasper._behaviorManager._isNonUpdateBehavior(behaviorName)){
                         console.log("extra behavior found:" +behaviorName);
                         this._extraBehaviors[behaviorName] = behavior;
@@ -539,7 +575,7 @@ Jasper.Object.prototype = {
                         this._behaviors[behaviorName]=behavior;
 
                         /////////WILL IT WORK
-                        if(typeof(behavior.render) == "function"){
+                        if(behavior instanceof Jasper.RenderableBehavior){
                             console.log("renderer found");
                             this._rendererBehavior = behavior;
                         }
@@ -561,11 +597,11 @@ Jasper.Object.prototype = {
             
         },
         _hasNormalBehavior: function(behaviorName){
-            inNormalBehaviors = !(this._behaviors[behaviorName] == undefined)
+            inNormalBehaviors = (this._behaviors[behaviorName] !== undefined);
             return inNormalBehaviors;
         },
         _hasExtraBehavior: function(behaviorName){
-            inExtraBehaviors = !(this._extraBehaviors[behaviorName] == undefined)
+            inExtraBehaviors = (this._extraBehaviors[behaviorName] !== undefined);
             return inExtraBehaviors;
         },
         getBehavior: function(behaviorName){
@@ -587,14 +623,18 @@ Jasper.Object.prototype = {
 
         // Custom Renderer Behavior overwrites all older behaviors and can be used for dynamic rendering
         setObjectRenderer: function(rendererBehaviorName){
-            this._rendererBehavior = this._behaviors[rendererBehaviorName];
-        }
+            if(this._behaviors[rendererBehaviorName] instanceof Jasper.RendererBehavior)
+                this._rendererBehavior = this._behaviors[rendererBehaviorName];
+            else{
+                throw Error("Cannot add behavior "+rendererBehaviorName+" as objectRenderer. Not a RenderableBehavior" );
+            }
+        },
 
         //DEBUG
-        ,_getExtraBehaviors: function(){
+        _getExtraBehaviors: function(){
             return this._extraBehaviors;
-        }
-        ,_getAllBehaviors: function(){
+        },
+        _getAllBehaviors: function(){
             return this._behaviors;
         }
     
@@ -749,20 +789,12 @@ Jasper.Mouse.prototype={
                 var e = this._events[i][0];
                 var x = this._events[i][1];
                 var y = this._events[i][2];
-                try{
+                
                 for(var j=0; j<len; j++){
 
                     this._callbackObjects[j].getBehavior("mouse")[e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
-
                 }
-                }
-                catch(e){
-                    console.log(this._callbackObjects[j]);
-                    throw Error(e);
-                    Jasper._core.running=false;
-
-
-                }
+                
 
             }
             //Clear the this._events array
@@ -787,35 +819,56 @@ Jasper.CircleDrawBehavior = function(){
     this.rad = 0;
     this.strokeColor = 'black';
     this.strokeWidth = 5;
-    this.fillColorR = 0;
-    this.fillColorG = 0;
-    this.fillColorB = 0;
-    this.fillColorA = 1;
+    this.fillColor = 'black';
+
 
     this.fill = true;
     this.stroke = true;
 
 };
 
-Jasper.CircleDrawBehavior.prototype = new Jasper.Behavior();
+Jasper.CircleDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.CircleDrawBehavior.prototype, {
-    init:function(){
+        init:function(){
 
-    },
+        },
+        update: function(dt){},
+
+        render:function(ctx){
+            parent = this.getParentObject();
+            ctx.beginPath();
+
+            ctx.arc(Math.floor(parent.getPosX()), Math.floor(parent.getPosY()), this.rad, 0, 2 * Math.PI, true);
+            if(this.fill){
+                ctx.fillStyle = this.fillColor;
+                ctx.fill();
+            }
+            if(this.stroke){
+                ctx.lineWidth = this.strokeWidth;
+                ctx.strokeStyle = this.strokeColor;
+                ctx.stroke();
+            }
+
+
+        },
+
 
         setRadius:function(radius){
             this.rad=radius;
             return this;
         },
         setFillColor: function(r,g,b,a){
-            this.fillColorR=r;
-            this.fillColorG=g;
-            this.fillColorB=b;
 
-            if(a != undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+                this.fillColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
+                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
                 this.getParentObject().setAlpha(a);
-                this.fillColorA=a;
+                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
             }
             return this;
         },
@@ -830,28 +883,8 @@ Object.extend(Jasper.CircleDrawBehavior.prototype, {
         setStrokeWidth: function(width){
             this.strokeWidth=width;
             return this;
-        },
-        update: function(dt){
-
-        },
-
-        render:function(ctx){
-            parent = this.getParentObject();
-            ctx.beginPath();
-
-            ctx.arc(Math.floor(parent.getPosX()), Math.floor(parent.getPosY()), this.rad, 0, 2 * Math.PI, true);
-            if(this.fill){
-                ctx.fillStyle = "rgba("+this.fillColorR+","+this.fillColorG+","+this.fillColorB+","+parent.getAlpha()+")";
-                ctx.fill();
-            }
-            if(this.stroke){
-                ctx.lineWidth = this.strokeWidth;
-                ctx.strokeStyle = this.strokeColor;
-                ctx.stroke();
-            }
-
-
         }
+        
 });;Jasper.MouseBehavior = function(){};
 
 Jasper.MouseBehavior.prototype = new Jasper.Behavior();
@@ -888,6 +921,84 @@ Object.extend(Jasper.RandomMoveBehavior.prototype , {
                 parent.setPosX(Math.floor((this.finalx-this.initx)/20000.0*this.elapsed));
                 parent.setPosY(Math.floor((this.finaly-this.inity)/20000.0*this.elapsed));
             }
+        }
+        
+});;/*
+    ERROR: init missing from object. workaround temp init function. Need to find out how to extend.
+
+*/
+
+
+
+Jasper.RectangleDrawBehavior = function(){
+    this.width = 0;
+    this.height = 0;
+    this.strokeColor = 'black';
+    this.strokeWidth = 5;
+    this.fillColor = 'black';
+
+    this.fill = true;
+    this.stroke = true;
+
+};
+
+Jasper.RectangleDrawBehavior.prototype = new Jasper.RenderableBehavior();
+
+Object.extend(Jasper.RectangleDrawBehavior.prototype, {
+        init:function(){
+
+        },
+        update: function(dt){},
+
+        render:function(ctx){
+            parent = this.getParentObject();
+
+            if(this.fill){
+                ctx.fillStyle = this.fillColor;
+                ctx.fillRect(parent.posX, parent.posY, this.width, this.height);
+            }
+            if(this.stroke){
+                ctx.lineWidth = this.strokeWidth;
+                ctx.strokeStyle = this.strokeColor;
+                ctx.strokeRect(parent.posX, parent.posY, this.width, this.height);
+            }
+
+
+        },
+
+        setWidth: function(width){
+            this.width=width;
+            return this;
+        },
+        setHeight: function(height){
+            this.height=height;
+            return this;
+        },
+        setFillColor: function(r,g,b,a){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+                this.fillColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
+                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
+                this.getParentObject().setAlpha(a);
+                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            }
+            return this;
+        },
+        setFillEnabled: function(boolean){
+            this.fill=boolean;
+            return this;
+        },
+        setStrokeEnabled: function(boolean){
+            this.stroke=boolean;
+            return this;
+        },
+        setStrokeWidth: function(width){
+            this.strokeWidth=width;
+            return this;
         }
         
 });

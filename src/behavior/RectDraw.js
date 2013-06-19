@@ -10,17 +10,14 @@ Jasper.RectangleDrawBehavior = function(){
     this.height = 0;
     this.strokeColor = 'black';
     this.strokeWidth = 5;
-    this.fillColorR = 0;
-    this.fillColorG = 0;
-    this.fillColorB = 0;
-    this.fillColorA = 1;
+    this.fillColor = 'black';
 
     this.fill = true;
     this.stroke = true;
 
 };
 
-Jasper.RectangleDrawBehavior.prototype = new Jasper.RendererBehavior();
+Jasper.RectangleDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.RectangleDrawBehavior.prototype, {
         init:function(){
@@ -32,7 +29,7 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
             parent = this.getParentObject();
 
             if(this.fill){
-                ctx.fillStyle = "rgba("+this.fillColorR+","+this.fillColorG+","+this.fillColorB+","+parent.getAlpha()+")";
+                ctx.fillStyle = this.fillColor;
                 ctx.fillRect(parent.posX, parent.posY, this.width, this.height);
             }
             if(this.stroke){
@@ -53,13 +50,16 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
             return this;
         },
         setFillColor: function(r,g,b,a){
-            this.fillColorR=r;
-            this.fillColorG=g;
-            this.fillColorB=b;
 
-            if(a !== undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+                this.fillColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
+                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
                 this.getParentObject().setAlpha(a);
-                this.fillColorA=a;
+                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
             }
             return this;
         },

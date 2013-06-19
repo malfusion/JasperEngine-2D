@@ -97,20 +97,12 @@ Jasper.Mouse.prototype={
                 var e = this._events[i][0];
                 var x = this._events[i][1];
                 var y = this._events[i][2];
-                try{
+                
                 for(var j=0; j<len; j++){
 
                     this._callbackObjects[j].getBehavior("mouse")[e](x,y);                 //Calls onMove(x,y), onClick(x,y), etc, ...
-
                 }
-                }
-                catch(e){
-                    console.log(this._callbackObjects[j]);
-                    throw Error(e);
-                    Jasper._core.running=false;
-
-
-                }
+                
 
             }
             //Clear the this._events array
