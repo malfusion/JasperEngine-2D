@@ -17,6 +17,8 @@ Jasper.Object = function(objectName){
     
     this.posX = 0;
     this.posY = 0;
+    this.height = 0;
+    this.width = 0; 
     this.worldX = 0;
     this.worldY = 0;
     this.rotation = 0;

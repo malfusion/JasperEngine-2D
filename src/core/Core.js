@@ -88,6 +88,7 @@ Jasper.Core.prototype = {
         init : function(args){
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
+            Jasper._spriteManager = new Jasper.SpriteManager();
             this._createCanvas(args.width, args.height);
             this.setFps(args.fps || 30);
             Jasper._core = this;

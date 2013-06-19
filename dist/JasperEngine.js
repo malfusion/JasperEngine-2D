@@ -140,7 +140,8 @@ Jasper.BehaviorManager = function () {
         'circle': Jasper.CircleDrawBehavior,
         'rect': Jasper.RectangleDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
-        'mouse': Jasper.MouseBehavior
+        'mouse': Jasper.MouseBehavior,
+        'sprite': Jasper.SpriteBehavior
     };
 
     this._nonUpdateBehaviors = ['mouse'];
@@ -320,6 +321,7 @@ Jasper.Core.prototype = {
         init : function(args){
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
+            Jasper._spriteManager = new Jasper.SpriteManager();
             this._createCanvas(args.width, args.height);
             this.setFps(args.fps || 30);
             Jasper._core = this;
@@ -497,6 +499,8 @@ Jasper.Object = function(objectName){
     
     this.posX = 0;
     this.posY = 0;
+    this.height = 0;
+    this.width = 0; 
     this.worldX = 0;
     this.worldY = 0;
     this.rotation = 0;
@@ -690,7 +694,86 @@ Jasper.Scene.prototype = {
         }
 
 };
-;
+;Jasper.SpriteManager = function(){
+	
+	//this.tempImage = new Image();
+	//this.tempImage.src = "../assets/temp.png";
+
+	// I'M SO PROUD OF MYSELF FOR THIS!!!
+
+	this._loadingCache = {};
+	this._spriteCache = {};
+	this._waitingBehaviors = {};
+	this._spriteNativeSizes = {};
+	this._spriteRegionRect = {};
+
+};
+
+
+Jasper.SpriteManager.prototype = {
+	setSprite: function(spriteBehavior, spritePath){
+		if(this._spriteCache[spritePath] !== undefined){
+			spriteBehavior._sprite = this._spriteCache[spritePath];
+			spriteBehavior._nativeWidth = this._spriteCache[spritePath].width;
+			spriteBehavior._nativeHeight = this._spriteCache[spritePath].height;
+			spriteBehavior._adjustDimensions();
+			spriteBehavior._loaded = true;
+		}
+
+		else if(this._loadingCache[spritePath] !== undefined){
+			this._addToWaitingList(spriteBehavior, spritePath);
+		}
+		else{
+
+			var img = new Image();
+			img.spritePath = spritePath;
+			this._loadingCache[spritePath] = img;
+			this._addToWaitingList(spriteBehavior, spritePath);
+
+			img.onload = function(){
+
+				var spriteManager = Jasper._spriteManager;
+
+				spriteManager._spriteCache[img.spritePath] = this;
+				delete spriteManager._loadingCache[img.spritePath];
+
+				spriteManager._clearWaitingBehaviors(img.spritePath);
+			};
+			img.src = spritePath;
+		}	
+		
+		//spriteBehavior._sprite = this.tempImage;
+
+	},
+	_clearWaitingBehaviors: function(spritePath){
+		if( this._waitingBehaviors[spritePath] !== undefined){
+			var beh = this._waitingBehaviors[spritePath].pop();
+
+			while(beh !== undefined){
+				beh._sprite = this._spriteCache[spritePath];
+				beh._nativeWidth = this._spriteCache[spritePath].width;
+				beh._nativeHeight = this._spriteCache[spritePath].height;
+				beh._adjustDimensions();
+				beh._loaded = true;
+				beh = this._waitingBehaviors[spritePath].pop();
+			}
+			delete this._waitingBehaviors[spritePath];
+		}
+
+	},
+
+	_addToWaitingList: function(spriteBehavior,spritePath){
+		if(this._waitingBehaviors[spritePath] === undefined)
+				this._waitingBehaviors[spritePath]=[];
+			this._waitingBehaviors[spritePath].push(spriteBehavior);
+	}
+
+
+
+
+
+
+};;
 Jasper.Mouse = function(){
 
     /*var clickX=0;
@@ -1001,4 +1084,94 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
             return this;
         }
         
+});;/*
+    ERROR: init missing from object. workaround temp init function. Need to find out how to extend.
+
+*/
+
+
+
+Jasper.SpriteBehavior = function(){
+
+    this._nativeWidth = 0;
+    this._nativeHeight = 0;
+    this._scaleX = 1;
+    this._scaleY = 1; 
+    this._sprite = null;
+    this._path = '';
+    this._loaded = false;
+
+    this._sprite=null;
+
+    this._toAdjust = false;
+
+
+};
+
+Jasper.SpriteBehavior.prototype = new Jasper.RenderableBehavior();
+
+Object.extend(Jasper.SpriteBehavior.prototype, {
+        init:function(){
+            
+        },
+        update: function(dt){},
+
+        render:function(ctx){
+            if(this._loaded){
+                parent = this.getParentObject();
+                ctx.drawImage(this._sprite, parent.posX, parent.posY, parent.width, parent.height);
+            }
+        },      
+
+        setSprite: function(path){
+            this._path = path;
+            Jasper._spriteManager.setSprite(this, this._path);
+            return this;
+        },
+        setHeight: function(height){
+            this.getParentObject().height=Math.floor(height);
+            return this;
+        },
+        setWidth: function(width){
+            this.getParentObject().width=Math.floor(width);
+            return this;
+        },
+        getHeight: function(){
+            return this.getParentObject.height;
+        },
+        getWidth: function(){
+            return this.getParentObject.width;
+        },
+        getNativeHeight: function(){
+            return this._nativeHeight;
+        },
+        getNativeWidth: function(){
+            return this._nativeWidth;
+        },
+        setScaleX: function(scaleX){
+            this._toAdjust = true;
+            this.getParentObject().width=Math.floor(this._nativeWidth*this._scaleX);
+            this._scaleX = scaleX;
+            return this;
+        },
+        setScaleY: function(scaleY){
+            this._toAdjust = true;
+            this.getParentObject().height=Math.floor(this._nativeHeight*this._scaleY);
+            this._scaleY = scaleY;
+            return this;
+        },
+        getScaleX: function(){
+            return this._scaleX;
+        },
+        getScaleY: function(){
+            return this._scaleY;
+        },
+        _adjustDimensions: function(){
+            if(this._toAdjust){
+                parent = this.getParentObject();
+                parent.width=Math.floor(this._nativeWidth*this._scaleX);
+                parent.height=Math.floor(this._nativeHeight*this._scaleY);
+            }
+        }
+     
 });

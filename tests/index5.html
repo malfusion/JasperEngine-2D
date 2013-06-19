@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div id="container"></div>
+<script src="../dist/JasperEngine.js"></script>
+
+
+<script>
+    var gameCore = new Jasper.Core();
+    gameCore.init({
+        width: 1000,
+        height: 1000
+    });
+
+    var mainScene = new Jasper.Scene('main');
+    gameCore.addScene(mainScene);
+    gameCore.startScene(mainScene);
+
+    setTimeout(function(){
+        var layer0 = new Jasper.Layer();
+        mainScene.addLayer(layer0);
+
+
+       strangers=[] ;
+       var mouseManager = gameCore.getMouseManager();
+
+        var attract = gameCore.createBehavior("attract",{},{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
+
+
+                    parent.setPosX(parent.getPosX() + ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() + ((mousePos[1]-parent.getPosY())/dist*2.0));
+                }
+
+        });
+
+        var repel = gameCore.createBehavior("repel",{},{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
+
+                    parent.setPosX(parent.getPosX() - ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() - ((mousePos[1]-parent.getPosY())/dist*2.0));
+                }
+
+        });
+
+        //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
+        for(i=0;i<10;i++){
+            for(j=0;j<100;j++){
+            var stranger = new Jasper.Object("stranger");
+            stranger.setPos(i*5,j*5);
+            stranger.addBehavior("sprite").setSprite("../assets/evil.png").setScaleX(0.2).setScaleY(0.2);
+            //stranger.addBehavior("rect").setFillColor('red').setWidth(10).setHeight(20).setStrokeWidth(1);
+            stranger.addBehavior("attract");
+            layer0.addObject(stranger);
+            strangers.push(stranger);
+            }
+        }
+
+        for(var i=0; i<strangers.length; i++){
+            var strangeMouse = strangers[i].addBehavior("mouse");
+            strangeMouse.onClick = function(){
+                stranger=this.getParentObject();
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            };
+        }
+    },1000);
+
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>

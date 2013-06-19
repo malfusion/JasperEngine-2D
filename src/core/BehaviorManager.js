@@ -13,7 +13,8 @@ Jasper.BehaviorManager = function () {
         'circle': Jasper.CircleDrawBehavior,
         'rect': Jasper.RectangleDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
-        'mouse': Jasper.MouseBehavior
+        'mouse': Jasper.MouseBehavior,
+        'sprite': Jasper.SpriteBehavior
     };
 
     this._nonUpdateBehaviors = ['mouse'];
