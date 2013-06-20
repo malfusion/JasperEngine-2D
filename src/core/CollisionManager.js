@@ -5,11 +5,13 @@ TODO: dont know how to change addbehavior and createbheavior yet
 
 
 Jasper.CollisionManager = function () {
-    this._layerNumber_Objects={};
+    this._layerNumber_Objects = {};
     this._layerNum_QuadTree = {};
 
+    this._layerNumber_TreeObjects = {}; 
     this._waitingList=[];
 
+    this.count=0;
 
 
 };
@@ -29,17 +31,21 @@ Jasper.CollisionManager.prototype = {
         }
         if(this._layerNum_QuadTree[obj.getLayer().getLayerNumber()] === undefined){
 
-            var bounds = {
-            x:0,
-            y:0,
-            width:obj.getLayer().getWorldSize().x,
-            height:obj.getLayer().getWorldSize().y
+            args = {
+               // mandatory fields
+                x:0,
+                y:0,
+                w:500,//obj.getLayer().getWorldSize().x,
+                h:500,//obj.getLayer().getWorldSize().y,       
             };
-            this._layerNum_QuadTree[obj.getLayer().getLayerNumber()] = new QuadTree(bounds);
+
+    
+            this._layerNum_QuadTree[obj.getLayer().getLayerNumber()] = QUAD.init(args);
         }
 
         if(this._layerNumber_Objects[obj.getLayer().getLayerNumber()] === undefined){
             this._layerNumber_Objects[obj.getLayer().getLayerNumber()] = [];
+            this._layerNumber_TreeObjects[obj.getLayer().getLayerNumber()] = [];
         }
 
         if(this._hasAlreadyRegistered(obj) === false){
@@ -77,28 +83,26 @@ Jasper.CollisionManager.prototype = {
 
 
     calculateCollisions: function(){
-
+        //console.log("count:"+this.count);
+        this.count=0;
         for(var layerNum in this._layerNum_QuadTree){
-            
-            var bounds = {
-            x:0,
-            y:0,
-            width:1000,
-            height:1000
-            };
-            tree = this._layerNum_QuadTree[layerNum] = new QuadTree(bounds);
+
+            tree = this._layerNum_QuadTree[layerNum];
+            tree.clear();
 
             var len = this._layerNumber_Objects[layerNum].length;
-            console.log("layer"+layerNum+" objsinsert:"+len);
+            //console.log("layer"+layerNum+" objsinsert:"+len);
             for(var i=0; i<len; i++){
                 var obj = this._layerNumber_Objects[layerNum][i];
-                tree.insert({
-                    x:obj.posX,//obj. worldX,
-                    y:obj.posY,//obj.worldY,
-                    height: obj.height,
-                    width: obj.width,
+                var treeobj = {
+                    x:Math.floor(obj.posX),//obj. worldX,
+                    y:Math.floor(obj.posY),//obj.worldY,
+                    h: obj.height,
+                    w: obj.width,
                     obj: obj
-                });
+                };
+                tree.insert(treeobj);
+                this._layerNumber_TreeObjects[layerNum].push(treeobj);
             }
 
             this._activateCollisionsInLayer(layerNum);
@@ -111,13 +115,31 @@ Jasper.CollisionManager.prototype = {
             for(var i=0; i<len; i++){
 
                 var obj = this._layerNumber_Objects[layerNum][i];
-                var collidedObjs = tree.retrieve({
-                    x:obj.posX,//obj. worldX,
-                    y:obj.posY,//obj.worldY,
-                    height:obj.height,
-                    width:obj.width
+
+                var search = this._layerNumber_TreeObjects[layerNum][i];
+
+                var collidedObjs = tree.retrieve(search, function(item){
+                   // Jasper._collisionManager.count++;
+                    //console.log("Collided");
+
+                    if(search != item){
+                        if  (search.x < (item.x + item.w) && 
+                            (search.x+search.w) > item.x && 
+                            search.y < (item.y + item.h) && 
+                            (search.y+search.h) > item.y){
+                            
+                            
+                            //Jasper._collisionManager.count++;
+                                //console.log("collided"+search.obj._id);
+                                search.obj.getBehavior("collision").onCollide(item.obj);
+                                item.obj.getBehavior("collision").onCollide(search.obj);
+
+                        }
+                    }
+
                 });
-                var colLen = collidedObjs.length;
+                
+                /*var colLen = collidedObjs.length;
                 //console.log(collidedObjs);
                 console.log("insame layer"+ colLen +" choildren count "+tree.root.children.length);
 
@@ -130,9 +152,10 @@ Jasper.CollisionManager.prototype = {
 
                             obj.getBehavior("collision").onCollide(collidedObjs[j].obj);
                     }
-                }
+                }*/
                 
             }
+            this._layerNumber_TreeObjects[layerNum].length = 0;
     }
 
 

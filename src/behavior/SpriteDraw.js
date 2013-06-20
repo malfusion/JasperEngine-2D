@@ -38,8 +38,10 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         },      
 
         setSprite: function(path){
-            this._path = path;
-            Jasper._spriteManager.setSprite(this, this._path);
+            if(this._path != path){
+                this._path = path;
+                Jasper._spriteManager.setSprite(this, this._path);
+            }
             return this;
         },
         setHeight: function(height){
