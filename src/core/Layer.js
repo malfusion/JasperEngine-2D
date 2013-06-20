@@ -24,6 +24,12 @@ Jasper.Layer = function(){
 
 Jasper.Layer.prototype = {
 
+        init: function(args){
+            this.worldSize.x = args.worldX;
+            this.worldSize.y = args.worldY;
+
+        },
+
         _update: function(dt){//layerNumber{
             //console.log('Layer '+layerNumber+" then "+numObjects);
             this.onUpdate();
@@ -56,6 +62,9 @@ Jasper.Layer.prototype = {
             if(jasperObject instanceof Jasper.Object){
                 jasperObject._layer = this;
                 this.objects.push(jasperObject);
+
+                jasperObject._onAddedToLayer();
+                
                 this.numObjects++;
             }
             else{
@@ -71,6 +80,9 @@ Jasper.Layer.prototype = {
         },
         getScene: function(){
             return this._scene;
+        },
+        getLayerNumber: function(){
+            return this._layerNumber;
         }
 
         

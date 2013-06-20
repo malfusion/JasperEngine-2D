@@ -168,7 +168,7 @@ Jasper.Mouse.prototype={
 
                 var objs = this["_"+e+"Objects"];
                 len = objs.length;
-                console.log("Processed: "+len+ "_"+e+"Objects");
+                //console.log("Processed: "+len+ "_"+e+"Objects");
                 for(var j=0; j<len; j++){
 
                     //this._callbackObjects[j].getBehavior("mouse")[e](x,y); 

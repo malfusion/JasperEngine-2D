@@ -7,7 +7,9 @@ TODO: the core intermediary call in addobject remove
 Jasper.Object = function(objectName){
 
     this._id = Jasper.Object.ID++;
-    this._layer = null;
+    this._layer = undefined;
+
+    this._initWaiting = [];
 
     this._behaviors={};
     this._extraBehaviors={};
@@ -26,6 +28,7 @@ Jasper.Object = function(objectName){
 
     this._name=objectName;
 
+
 //    this.core : undefined;
     this._scene = null;
 
@@ -35,7 +38,16 @@ Jasper.Object = function(objectName){
 Jasper.Object.prototype = {
 
         _update: function(dt){
-            //console.log(name);
+            
+            // Call All initialisations on newly attached behaviors
+            if(this._initWaiting.length>0){
+                var toInitBehav = this._initWaiting.pop();
+                while(toInitBehav !== undefined){
+                    toInitBehav.init();
+                    toInitBehav = this._initWaiting.pop();
+                }
+            }
+
             for (var behavior in this._behaviors){
                 //console.log(name+" : "+behavior);
                 //try{
@@ -57,6 +69,9 @@ Jasper.Object.prototype = {
                 this._rendererBehavior.renderAfter(ctx);
             }
 
+        },
+        _onAddedToLayer: function(){
+            Jasper._collisionManager._clearWaiting(this);
         },
 
         getPosX: function(){
@@ -80,15 +95,22 @@ Jasper.Object.prototype = {
         setAlpha: function(val){
             this.alpha=val;
         },
+        getLayer:function(){
+            return this._layer;
+        },
+        _addInitWaiting: function(behavior){
+            this._initWaiting.push(behavior);
+        },
         //RETURNS: JasperBehavior Object
         addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
             if(typeof (behaviorName) == "string"){
                 var behavior = Jasper._behaviorManager._addBehaviorToObject(behaviorName, this);
-
+                
                 if(behavior instanceof Jasper.Behavior){
 
+
                     behavior._parent = this;
-                    
+                    this._addInitWaiting(behavior);
                     if(Jasper._behaviorManager._isNonUpdateBehavior(behaviorName)){
                         console.log("extra behavior found:" +behaviorName);
                         this._extraBehaviors[behaviorName] = behavior;

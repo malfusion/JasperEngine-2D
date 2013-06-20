@@ -68,6 +68,7 @@ Jasper.Core.prototype = {
             if(this.activeScene instanceof Jasper.Scene){
                 this.activeScene._update(elapsedTime);
                 Jasper._mouseManager._activateCallbacks();
+                Jasper._collisionManager.calculateCollisions();
                 this._render();
             }
         },
@@ -89,6 +90,7 @@ Jasper.Core.prototype = {
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
             Jasper._spriteManager = new Jasper.SpriteManager();
+            Jasper._collisionManager = new Jasper.CollisionManager();
             this._createCanvas(args.width, args.height);
             this.setFps(args.fps || 30);
             Jasper._core = this;

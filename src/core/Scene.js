@@ -38,12 +38,21 @@ Jasper.Scene.prototype = {
             if(jasperLayer instanceof Jasper.Layer){
                 this.layerList.push(jasperLayer);
                 jasperLayer.scene = this;
-                jasperLayer.layerNumber = this.numLayers;
+                jasperLayer._layerNumber = this.numLayers;
                 this.numLayers++;
             }
             else{
                 console.log("Cannot add object to scene. need Jasper.Layer");
             }
+        },
+        getLayerWithNumber: function(num){
+            len = this.layerList.length;
+            for(var i=0;i<len;i++){
+                if(layerList[i].getLayerNumber() == num){
+                    return layerList[i];
+                }
+            }
+            return null;
         }
 
 };

@@ -14,10 +14,11 @@ Jasper.BehaviorManager = function () {
         'rect': Jasper.RectangleDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior,
-        'sprite': Jasper.SpriteBehavior
+        'sprite': Jasper.SpriteBehavior,
+        'collision': Jasper.CollisionBehavior
     };
 
-    this._nonUpdateBehaviors = ['mouse'];
+    this._nonUpdateBehaviors = ['mouse', 'collision'];
 
 };
 
@@ -40,7 +41,7 @@ Jasper.BehaviorManager.prototype = {
                 if (typeof (behavior.init) == "undefined") {
                     behavior.prototype.init = function (object) {};
                 }
-                behavior.init(object); //TODO: Add behavior init functionality for each behavior
+                //behavior.init(object); //TODO: Add behavior init functionality for each behavior
                 return behavior;
             } else {
                 console.log("Behavior "+behaviorName+" has not been registered to JasperCore");
