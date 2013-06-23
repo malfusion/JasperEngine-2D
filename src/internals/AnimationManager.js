@@ -2,7 +2,11 @@ Jasper.AnimationManager = function(){
 	
 	this._objectsToAnimate = [];
 	this._animLookup = {
-		"move": Jasper.MoveAnimation
+		"move": Jasper.MoveAnimation,
+		"movex": Jasper.MoveXAnimation,
+		"movey": Jasper.MoveYAnimation,
+		"alpha": Jasper.AlphaAnimation,
+		"rotate": Jasper.RotateAnimation
 	};
 
 	this._interpolatorLookup = {

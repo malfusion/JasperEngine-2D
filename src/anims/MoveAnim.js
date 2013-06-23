@@ -13,6 +13,7 @@ Jasper.MoveAnimation.prototype = new Jasper.Animation();
 
 Object.extend(Jasper.MoveAnimation.prototype, {
 
+
 	_update: function(dt){
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;

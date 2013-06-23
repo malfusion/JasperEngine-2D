@@ -131,6 +131,20 @@ Jasper.Object.prototype = {
         setAlpha: function(val){
             this.alpha=val;
         },
+        getRotationAngle:function(){
+            return this.rotation*180/Math.PI;
+        },
+        setRotationAngle: function(val){
+            this.rotation=val*Math.PI/180;
+        },
+        getRotationRadian: function(){
+            return this.rotation;
+        },
+        setRotationARadian: function(val){
+            this.rotation=val;
+        },
+
+
         getLayer:function(){
             return this._layer;
         },
