@@ -7,6 +7,11 @@ var Jasper = function(){
 };
 
 
+Jasper.Constants = {
+  ANIM_SHORT_DURATION: 1000,
+  ANIM_LONG_DURATION: 3000
+  
+};
 
 
 

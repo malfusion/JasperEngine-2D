@@ -120,20 +120,15 @@ Jasper.CollisionManager.prototype = {
 
                 var collidedObjs = tree.retrieve(search, function(item){
                    // Jasper._collisionManager.count++;
-                    //console.log("Collided");
-
+                   // 
                     if(search != item){
                         if  (search.x < (item.x + item.w) && 
                             (search.x+search.w) > item.x && 
                             search.y < (item.y + item.h) && 
                             (search.y+search.h) > item.y){
-                            
-                            
-                            //Jasper._collisionManager.count++;
-                                //console.log("collided"+search.obj._id);
+                                //Jasper._collisionManager.count++;
                                 search.obj.getBehavior("collision").onCollide(item.obj);
                                 item.obj.getBehavior("collision").onCollide(search.obj);
-
                         }
                     }
 

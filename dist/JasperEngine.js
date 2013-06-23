@@ -7,6 +7,11 @@ var Jasper = function(){
 };
 
 
+Jasper.Constants = {
+  ANIM_SHORT_DURATION: 1000,
+  ANIM_LONG_DURATION: 3000
+  
+};
 
 
 
@@ -232,6 +237,61 @@ Jasper.BehaviorManager.prototype = {
     }
 
 
+};;Jasper.Camera = function(args){
+
+	this.posX=0;
+	this.posY=0;
+
+	this.width = args.width;
+	this.height = args.height;
+
+	this.worldWidth=args.worldWidth;
+	this.worldHeight=args.worldHeight;
+
+
+
+};
+
+
+
+
+Jasper.Camera.prototype = {
+	setCameraX: function(x){
+		if(x+this.width <= this.worldWidth  &&  x>=0)
+			this.posX=Math.floor(x);
+		return this;
+	},
+	setCameraY: function(y){
+		if(y>=0  &&  y+this.height <= this.worldHeight)
+			this.posY=Math.floor(y);
+		return this;
+	},
+	setCameraPos: function(x,y){
+		if(x+this.width <= this.worldWidth  &&  x>=0)
+			this.posX=Math.floor(x);
+		if(y>=0  &&  y+this.height <= this.worldHeight)
+			this.posY=Math.floor(y);
+	},
+
+	getCameraX: function(){
+		return this.posX;
+	},
+	getCameraY: function(){
+		return this.posY;
+	},
+
+
+	followObject: function(obj, offsetX, offsetY){
+
+	},
+
+	getViewportPos: function(obj){
+		return [obj.getPosX()-this.getCameraX(), obj.getPosY()-this.getCameraY()];
+	}
+
+
+
+
 };;/*
 
 TODO: dont know how to change addbehavior and createbheavior yet
@@ -354,20 +414,15 @@ Jasper.CollisionManager.prototype = {
 
                 var collidedObjs = tree.retrieve(search, function(item){
                    // Jasper._collisionManager.count++;
-                    //console.log("Collided");
-
+                   // 
                     if(search != item){
                         if  (search.x < (item.x + item.w) && 
                             (search.x+search.w) > item.x && 
                             search.y < (item.y + item.h) && 
                             (search.y+search.h) > item.y){
-                            
-                            
-                            //Jasper._collisionManager.count++;
-                                //console.log("collided"+search.obj._id);
+                                //Jasper._collisionManager.count++;
                                 search.obj.getBehavior("collision").onCollide(item.obj);
                                 item.obj.getBehavior("collision").onCollide(search.obj);
-
                         }
                     }
 
@@ -405,7 +460,7 @@ Handle createbehavior
 */
 
 
-Jasper.Core    = function(){
+Jasper.Core    = function(args){
 
     this.fps = 60;
     this.running = false;
@@ -413,8 +468,9 @@ Jasper.Core    = function(){
     this.lastTime = 0;
     
     this.canvas = null;
-    this.canvasWidth = 0;
-    this.canvasHeight = 0;
+    this.canvasWidth = args.canvasWidth;
+    this.canvasHeight = args.canvasHeight;
+    this.containerId = args.container;
     this.canvasContext = null;
     
     this.scenes = [];
@@ -431,17 +487,17 @@ Jasper.Core    = function(){
 
 Jasper.Core.prototype = {
 
-        _createCanvas: function(width, height){
+        _createCanvas: function(){
             this.canvas = document.createElement('canvas');
-            this.canvas.width = this.canvasWidth = width;
-            this.canvas.height = this.canvasHeight = height;
+            this.canvas.width = this.canvasWidth ;
+            this.canvas.height = this.canvasHeight ;
             this.canvas.onmousemove = function(e){ Jasper._mouseManager.mouseMove(e);};
             this.canvas.onmousedown = Jasper._mouseManager.mouseDown.bind(Jasper._mouseManager);
             this.canvas.onmouseup = Jasper._mouseManager.mouseUp.bind(Jasper._mouseManager);
             this.canvas.onclick = Jasper._mouseManager.mouseClick.bind(Jasper._mouseManager);
             this.canvas.ondblclick = Jasper._mouseManager.mouseDblClick.bind(Jasper._mouseManager);
             this.canvasContext = this.canvas.getContext('2d');
-            document.getElementById('container').appendChild(this.canvas);
+            document.getElementById(this.containerId).appendChild(this.canvas);
         },
 
         _render: function () {
@@ -452,24 +508,18 @@ Jasper.Core.prototype = {
         },
 
         _update : function (){
-            //console.log(this.lastTime);
-
+            
+            requestAnimFrame(this._update.bind(this));
+            
             currTime = new Date().getTime();
-            //console.log(this.currTime);
-            elapsedTime = currTime - this.lastTime;
+            dt = currTime - this.lastTime;
             this.lastTime=currTime;
             
-
-            //if(this.showFps)
-            //  console.log(elapsedTime);
-            if(this.running)
-                requestAnimFrame(this._update.bind(this));
-
-            //console.log('Frame');
-            if(this.activeScene instanceof Jasper.Scene){
-                this.activeScene._update(elapsedTime);
+            if(this.running){
+                this.activeScene._update(dt);
                 Jasper._mouseManager._activateCallbacks();
                 Jasper._collisionManager.calculateCollisions();
+                Jasper._animationManager._runAnimations(dt);
                 this._render();
             }
         },
@@ -486,19 +536,29 @@ Jasper.Core.prototype = {
         },
        
         
-        // expects 'width', 'height', 'fps'
-        init : function(args){
+        
+        init : function(){
+            Jasper._core = this;
+            
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
             Jasper._spriteManager = new Jasper.SpriteManager();
             Jasper._collisionManager = new Jasper.CollisionManager();
-            this._createCanvas(args.width, args.height);
-            this.setFps(args.fps || 30);
-            Jasper._core = this;
+            Jasper._animationManager = new Jasper.AnimationManager();
+            this._createCanvas();
             this._start();
+            return this;
         },
 
-       
+        pause: function(){
+            this.running = false;
+            return this;
+        },
+
+        play: function(){
+            this.running = true;
+            return this;
+        },
 
         getCanvas: function(){
             return this.canvas;
@@ -509,66 +569,84 @@ Jasper.Core.prototype = {
         },
 
         addScene: function(jasperScene){
-            if(this.scenes.indexOf(jasperScene) == -1)
-                this.scenes.push(jasperScene);
+            if(jasperScene instanceof Jasper.Scene){
+                if(this.scenes.indexOf(jasperScene) == -1){
+                    this.scenes.push(jasperScene);
+                    jasperScene._onAdd();
+                    return this;
+                }
+                
+            }
+            else
+                throw Error("Can only add a valid Jasper.Scene");
         },
         removeScene: function(jasperScene){
             if(this.activeScene == jasperScene){
-                console.log("Trying to remove currently active scene not permitted.");
-                return;
+                throw Error("Trying to remove currently active scene not permitted. end scene first");
             }
 
             var indx = this.scenes.indexOf(jasperScene);
-            if(indx != -1)
+            if(indx != -1){
+                this.scenes[indx]._onDestroy();
                 this.scenes.splice(indx,1);
+                return this;
+            }
 
         },
         removeSceneByName: function(jasperSceneName){
             if(this.activeScene.getSceneName() == jasperSceneName){
-                console.log("Trying to remove currently active scene not permitted.");
-                return;
+                throw Error("Trying to remove currently active scene not permitted.");
             }
             for (var i=0; i<this.scenes.length; i++){
-                if(this.scenes.getSceneName()==jasperSceneName){
+                if(this.scenes[i].getSceneName()==jasperSceneName){
                     this.scenes.splice(i,1);
+                    return this;
                 }
             }
         },
-        getScenes: function(){
-            return this.scenes;
+
+        getCurrentScene: function(){
+            return this.activeScene;
         },
 
         startScene: function(jasperScene){
-            this.activeScene = jasperScene;
+            if(jasperScene instanceof Jasper.Scene){
+                jasperScene._onStart();
+                this.activeScene = jasperScene;
+                return this;
+            }
+            else
+                throw Error("Can only start a valid Jasper.Scene");
         },
 
         endScene: function(){
             this.scenes.splice(this.scenes.indexOf(this.activeScene),1);
             this.activeScene = undefined;
+            return this;
+        },
 
+        getSceneByName: function(jasperSceneName){
+            for (var i=0; i<this.scenes.length; i++){
+                if(this.scenes[i].getSceneName()==jasperSceneName){
+                    return this.scenes[i];
+                }
+            }
         },
-/*
-        addBehaviorObjectPair: function(behaviorName, object){
-           return Jasper.BehaviorManager.addBehaviorToObject(behaviorName, object);
-        },
-        deleteBehaviorObjectPair: function(behaviorName, object){
-            Jasper.BehaviorManager.deleteBehaviorFromObject(behaviorName, object);
-        },
-        
 
-        objectId: function objectId(obj) {
-            if (obj==null) return null;
-            if (obj.__obj_id==null) obj.__obj_id=__next_objid++;
-            return obj.__obj_id;
+        getScenes: function(){
+            return this.scenes;
         },
-*/
-createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
+
+        createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
             var behaviorClass = Jasper.Behavior._createBehavior(behaviorVars, behaviorFuns);
             return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass);
-        },
-        setFps : function(engineFps){
+        }
+
+        /*
+        setFps: function(engineFps){
                        fps=engineFps;
-                    }
+        }
+                    */
 
 
 };
@@ -580,31 +658,36 @@ createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
 
 */
 
-Jasper.Layer = function(){
+Jasper.Layer = function(args){
+    this._name=args.name;
+
+    this._hud = false;
+    this._camera  = undefined;
+    if(args.hud !== undefined){
+        this._hud = true;
+    }
+    
     this._scene = null;
     this._layerNumber = -1;
 
-    this.worldSize={};
-    this.viewportSize={};
+    this.worldW=0;
+    this.worldH=0;
 
     this.objects = [];
     this.numObjects = 0;
 
 
-    this.onInit=function(){};
-    this.onUpdate=function(){};
-    this.onDestroy=function(){};
+    this.onAdd = function(){};
+    this.onObjectAdd = function(obj){};
+    this.onObjectRemove = function(obj){};
+    this.onUpdate = function(){};
+    this.onDestroy =function(){};
        
 };
 
 Jasper.Layer.prototype = {
 
-        init: function(args){
-            this.worldSize.x = args.worldX;
-            this.worldSize.y = args.worldY;
-
-        },
-
+        
         _update: function(dt){//layerNumber{
             //console.log('Layer '+layerNumber+" then "+numObjects);
             this.onUpdate();
@@ -618,37 +701,60 @@ Jasper.Layer.prototype = {
                 this.objects[i]._render(canvasContext);
             }
         },
+        _onAdd: function(){
+            this.onAdd();
+        },
+        _onStart: function(){
+            this.onStart();
+        },
+        _onDestroy: function(){
+            this.onDestroy();
+            var len=objects.length;
+            for(var i=0; i<len; i++){
+                objects[i]._onDestroy();
+            }
+            
+        },
+        _onObjectAdd: function(obj){
+            this.onObjectAdd(obj);
+        },
+        _onObjectRemove: function(obj){
+            this.onObjectRemove(obj);
+        },
 
-        setWorldSize: function(width,height){
-            this.worldSize.x=width; 
-            this.worldSize.y=height;
-        },
         getWorldSize: function(){
-            return this.worldSize;
+            return [this.worldW, this.worldH];
         },
-        setViewportSize: function(width,height){
-            this.viewportSize.x=width; 
-            this.viewportSize.y=height;
-        },
-        getViewportSize: function(){
-            return this.viewportSize;
-        },
+
         addObject: function(jasperObject){
             if(jasperObject instanceof Jasper.Object){
                 jasperObject._layer = this;
                 this.objects.push(jasperObject);
-
-                jasperObject._onAddedToLayer();
-                
                 this.numObjects++;
-            }
+
+                this._onObjectAdd(jasperObject);
+                jasperObject._onAddedToLayer();
+                return this;
+                
+            } 
             else{
-                console.log("Cannot add object of type : "+jasperObject.class+" ; needs JasperObject" );
+                throw Error("Cannot add object, needs JasperObject" );
             }
 
         },
-        removeObject: function(object){
 
+        removeObject: function(jasperObject){
+            if(jasperObject instanceof Jasper.Object){
+                var indx = this.objects.indexOf(jasperObject);
+                if(indx !== -1){
+                    obj=this.objects.splice(indx,1);
+                    this._onObjectRemove(obj);
+                }
+                return this;
+            }
+            else{
+                throw Error("Cannot remove object, needs JasperObject" );
+            }
         },
         getObjects: function(){
             return this.objects;
@@ -658,6 +764,12 @@ Jasper.Layer.prototype = {
         },
         getLayerNumber: function(){
             return this._layerNumber;
+        },
+        getCamera: function(){
+            return this._camera;
+        },
+        isHud: function(){
+            return this._hud;
         }
 
         
@@ -679,14 +791,17 @@ Jasper.Object = function(objectName){
     this._extraBehaviors={};
     this._rendererBehavior = null;
     
+    this._anims ={};
+
     this.visible = false;
     
     this.posX = 0;
     this.posY = 0;
     this.height = 0;
     this.width = 0; 
-    this.worldX = 0;
-    this.worldY = 0;
+    this._viewportX = 0;
+    this._viewportY = 0;
+    
     this.rotation = 0;
     this.alpha = 0;
 
@@ -734,6 +849,32 @@ Jasper.Object.prototype = {
             }
 
         },
+        _runAnimations: function(dt){
+            for (var key in this._anims) {
+                this._anims[key]._update(dt);
+            }
+            this._checkAnimationList();
+        },
+        _checkAnimationList: function(){
+            var empty = false;
+            for (var key in this._anims) {
+                if (hasOwnProperty.call(this._anims, key))    { empty =  false; break; }
+            }
+            if(empty){
+                Jasper._animationManager._unregisterObject(this);
+            }
+        },
+        removeAnimation: function(animName){
+            delete this._anims[animName];
+            this._checkAnimationList();
+        },
+        addAnimation: function(animName, attrs){
+            var anim = Jasper._animationManager._createAnimation(animName, attrs);
+            this._anims[animName] = anim;
+            anim._setParentObject(this);
+            Jasper._animationManager._registerObject(this);
+            return anim;
+        },
         _onAddedToLayer: function(){
             Jasper._collisionManager._clearWaiting(this);
         },
@@ -742,16 +883,23 @@ Jasper.Object.prototype = {
             return this.posX;
         },
         setPosX: function(posx){
-            this.posX=posx;
+            this.posX=Math.floor(posx);
         },
         getPosY:function(){
             return this.posY;
         },
         setPosY: function(posy){
-            this.posY=posy;
+            this.posY=Math.floor(posy);
+        },
+        getViewportPos: function(){
+            if(this.getLayer().isHud()){
+                return [this.getPosX(), this.getPosY()];
+            }else{
+                return this.getLayer().getCamera().getViewportPos(this);
+            }
         },
         setPos: function(x,y){
-            this.posX=x; this.posY=y;
+            this.posX=Math.floor(x); this.posY=Math.floor(y);
         },
         getAlpha:function(){
             return this.alpha;
@@ -849,15 +997,30 @@ Jasper.Object.prototype = {
 };
 
 Jasper.Object.ID = 0;
-;Jasper.Scene = function(sceneName){
-    this.sceneName = sceneName;
+;Jasper.Scene = function(args){
 
+    this.sceneName = args.name;
+
+    this.worldW = args.worldW;
+    this.worldH = args.worldH;
+
+    this._camera = new Jasper.Camera({
+        width:500,
+        height:500,
+        worldWidth: this.worldW,
+        worldHeight: this.worldH
+    });
+    
+    
     this.layerList=[];
     this.numLayers=0;
 
-    this.onInit=function(){};
-    this.onUpdate=function(){};
-    this.onDestroy=function(){};
+
+    this.onAdd = function(){};
+    this.onAddLayer = function(layer){};
+    this.onStart = function(){};
+    this.onUpdate = function(){};
+    this.onDestroy = function(){};
        
 };
 
@@ -877,8 +1040,26 @@ Jasper.Scene.prototype = {
             }
         },
 
+        _onAdd: function(){
+            this.onAdd();
+        },
+        _onStart: function(){
+            this.onStart();
+        },
+        _onDestroy: function(){
+            this.onDestroy();
+            var len = this.layerList.length;
+            for(var i=0; i<len; i++){
+                this.layerList[i]._onDestroy();
+            }
+        },
+        _onAddLayer: function(layer){
+            this.onAddLayer(layer);
+        },
+
         setSceneName: function(name){
             this.sceneName=name;
+            return this;
         },
 
         getSceneName: function(){
@@ -887,23 +1068,44 @@ Jasper.Scene.prototype = {
         //                                Option to add layer number for comfort
         addLayer: function(jasperLayer){
             if(jasperLayer instanceof Jasper.Layer){
+                
+                jasperLayer.worldW=this.worldW;
+                jasperLayer.worldH=this.worldH;
+                
                 this.layerList.push(jasperLayer);
                 jasperLayer.scene = this;
                 jasperLayer._layerNumber = this.numLayers;
+                jasperLayer._camera = this._camera;
                 this.numLayers++;
+
+
+                this._onAddLayer(jasperLayer);
+                jasperLayer._onAdd();
+
+                return this;
             }
             else{
-                console.log("Cannot add object to scene. need Jasper.Layer");
+                throw Error("Cannot add object to scene. need Jasper.Layer");
+            }
+        },
+        //jasperLayers is an array of jasper.layer
+        addLayers: function(jasperLayers){
+            var len = jasperLayers.length;
+            for(var i=0; i<len; i++){
+                this.addLayer(jasperLayers[i]);
             }
         },
         getLayerWithNumber: function(num){
             len = this.layerList.length;
             for(var i=0;i<len;i++){
-                if(layerList[i].getLayerNumber() == num){
-                    return layerList[i];
+                if(this.layerList[i].getLayerNumber() == num){
+                    return this.layerList[i];
                 }
             }
             return null;
+        },
+        getLayers: function(){
+            return this.layerList;
         }
 
 };
@@ -986,7 +1188,57 @@ Jasper.SpriteManager.prototype = {
 
 
 
-};;
+};;Jasper.AnimationManager = function(){
+	
+	this._objectsToAnimate = [];
+	this._animLookup = {
+		"move": Jasper.MoveAnimation
+	};
+
+	this._interpolatorLookup = {
+		"linear": Jasper.LinearInterpolator
+	};
+
+
+
+};
+
+Jasper.AnimationManager.prototype = {
+	
+	_runAnimations: function(dt){
+		var len = this._objectsToAnimate.length;
+		for (var i=0; i<len; i++){
+			this._objectsToAnimate[i]._runAnimations(dt);
+		}
+	},
+
+	_registerObject: function(obj){
+		var indx = this._objectsToAnimate.indexOf(obj);
+		if(indx === -1){
+			this._objectsToAnimate.push(obj);
+		}
+	},
+
+	_unregisterObject: function(obj){
+		var indx = this._objectsToAnimate.indexOf(obj);
+		if(indx !== -1){
+			this._objectsToAnimate.splice(indx,1);
+		}
+	},
+
+	_createAnimation: function(animName, attrs){
+		var anim = new this._animLookup[animName]();
+		if(anim === undefined){
+			return null;
+		}
+		Object.extend(anim, attrs);
+		anim._setInterpolator(new this._interpolatorLookup[anim.interpolator]());
+		return anim;
+	}
+
+
+	
+};	;
 Jasper.Mouse = function(){
 
     /*var clickX=0;
@@ -1273,7 +1525,7 @@ QUAD.init = function(args) {
 
                 if (nodes.length) {
                     // get the node in which the item fits best
-                    i = this.findInsertNode(item)
+                    i = this.findInsertNode(item);
                     if (i === PARENT) {
                         // if the item does not fit, push it into the
                         // children array
@@ -1579,6 +1831,122 @@ Object.extend(Jasper.MouseBehavior.prototype,{
         },
 
 
+});;/*
+    ERROR: init missing from object. workaround temp init function. Need to find out how to extend.
+
+*/
+
+
+
+Jasper.PolygonDrawBehavior = function(){
+    this._points = [];
+    this._numPoints = 0;
+
+    this.strokeColor = 'black';
+    this.strokeWidth = 5;
+    this.fillColor = 'black';
+
+
+    this.fill = true;
+    this.stroke = true;
+
+};
+
+Jasper.PolygonDrawBehavior.prototype = new Jasper.RenderableBehavior();
+
+Object.extend(Jasper.PolygonDrawBehavior.prototype, {
+        init:function(){
+
+        },
+        update: function(dt){},
+
+        render:function(ctx){
+            parent = this.getParentObject();
+
+            ctx.beginPath();
+            ctx.moveTo(this._points[0][0], this._points[0][1]);
+            for (var i=0; i<this._numPoints; i++){
+                ctx.lineTo(this._points[this._numPoints][0], this._points[this._numPoints][1]);
+            }
+            ctx.closePath();
+
+            
+            if(this.fill){
+                ctx.fillStyle = this.fillColor;
+                ctx.fill();
+            }
+            if(this.stroke){
+                ctx.lineWidth = this.strokeWidth;
+                ctx.strokeStyle = this.strokeColor;
+                ctx.stroke();
+            }
+
+
+        },
+
+
+        // point is an array having [x,y]
+        addPoint:function(point){
+            parent = this.getParentObject();
+            if(this._numPoints === 0){
+                parent.posX = point[0];
+                parent.posY = point[1];
+                parent.width = 0;
+                parent.height = 0;
+            }
+            else{
+                if( point[0] < parent.posX )
+                    parent.posX = point[0];
+                if( point[1] < parent.posY )
+                    parent.posY = point[1];
+                if( point[0] > (parent.posX+parent.width) )
+                    parent.width = point[0] - parent.posX;
+                if( point[1] > (parent.posY+parent.height) )
+                    parent.height = point[1] - parent.posY;
+            }
+            this._points.push(point);
+            this._numPoints++;
+            return this;
+        },
+
+        addPoints: function(points){
+            var len = points.length;
+            for(var i=0; i<len ; i++){
+                this.addPoint(points[i]);
+            }
+        },
+
+        clearPoints: function(){
+            this._points.length = 0;
+            this._numPoints = 0;
+        },
+        setFillColor: function(r,g,b,a){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+                this.fillColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
+                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
+                this.getParentObject().setAlpha(a);
+                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            }
+            return this;
+        },
+        setFillEnabled: function(boolean){
+            this.fill=boolean;
+            return this;
+        },
+        setStrokeEnabled: function(boolean){
+            this.stroke=boolean;
+            return this;
+        },
+        setStrokeWidth: function(width){
+            this.strokeWidth=width;
+            return this;
+        }
+        
 });;Jasper.RandomMoveBehavior = function(){
     this.finalx = Math.floor((Math.random()*500)+1);
     this.finaly = Math.floor((Math.random()*500)+1);
@@ -1712,7 +2080,8 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         render:function(ctx){
             if(this._loaded){
                 parent = this.getParentObject();
-                ctx.drawImage(this._sprite, parent.posX, parent.posY, parent.width, parent.height);
+                pos = parent.getViewportPos();
+                ctx.drawImage(this._sprite, pos[0], pos[1], parent.width, parent.height);
             }
         },      
 
@@ -1732,10 +2101,10 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
             return this;
         },
         getHeight: function(){
-            return this.getParentObject.height;
+            return this.getParentObject().height;
         },
         getWidth: function(){
-            return this.getParentObject.width;
+            return this.getParentObject().width;
         },
         getNativeHeight: function(){
             return this._nativeHeight;
@@ -1769,4 +2138,155 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
             }
         }
      
+});;Jasper.Animation = function(){
+
+	this._name = "";
+	this._started = false;
+	this._paused = true;
+	this._elapsedTime = 0 ;
+	this._object = null;
+
+	//the public variable is the name
+	
+	this.interpolator = "linear";
+	this._interpolator = null;
+	this.duration = Jasper.Constants.ANIM_SHORT_DURATION;
+
+	this.onStart = function(){};
+	this.onFrame = function(dt){};
+	this.onPause = function(){};
+	this.onResume = function(){};
+	this.onEnd = function(){};
+
+};
+
+
+Jasper.Animation.prototype = {
+	_setParentObject: function(obj){
+		this._object = obj;
+	},
+	getParentObject: function(){
+		return this._object;
+	},
+	getAnimName: function(){
+		return this._name;
+	},
+	_setInterpolator: function(interpolator){
+		if(interpolator instanceof Jasper.Interpolator){
+			this._interpolator = interpolator;
+		}
+		else{
+			throw Error("Not a valid interpolator");
+		}
+	},
+	setOnStart: function(func){
+		this.onStart = func;
+	},
+	setOnFrame: function(func){
+		this.onFrame = func;
+	},
+	setOnPause: function(func){
+		this.onPause = func;
+	},
+	setOnResume: function(func){
+		this.onResume = func;
+	},
+	setOnEnd: function(func){
+		this.onEnd = func;
+	},
+	_onStart: function(){
+		this._started = true;
+		this._paused = false;
+		this.onStart();
+	},
+	_onPause: function(){
+		this._paused = true;
+		this.onPause();
+	},
+	_onResume: function(){
+		this._paused = false;
+		this.onResume();
+	},
+	_onEnd: function(){
+		this.started = false;
+		this.getParentObject().removeAnimation(this.getAnimName());
+		this.onEnd();
+	},
+	_onFrame: function(dt){
+		this.onFrame(dt);
+	},
+	_update: function(dt){
+		this._onFrame(dt);
+	},
+	start: function(){
+		this._started = true;
+		this._paused = false;
+		this._onStart();
+	},
+	reset: function(){
+		this._started = false;
+		this._paused = true;
+		this._elapsedTime = 0;
+	}
+	
+
+};;Jasper.Interpolator = function(){
+	
+};
+
+
+Jasper.Interpolator.prototype = {
+	getValue: function(){}
+};
+;Jasper.LinearInterpolator = function(){
+	
+};
+
+Jasper.LinearInterpolator.prototype = new Jasper.Interpolator();
+
+
+Object.extend(Jasper.LinearInterpolator.prototype, {
+
+	getValue: function(start, end, elapsed , dur){
+		return start+((end-start) * elapsed/dur * 1.0);
+	}
+		
+});
+;Jasper.MoveAnimation = function(){
+	this._name = "move";
+	this.fromX = null;
+	this.fromY = null;
+	this.toX = null;
+	this.toY = null;
+};
+
+
+
+Jasper.MoveAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.MoveAnimation.prototype, {
+
+	_update: function(dt){
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				this.getParentObject().setPos(this.toX, this.toY);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+			this.getParentObject().setPos(
+				this._interpolator.getValue(this.fromX, this.toX, this._elapsedTime, this.duration),
+				this._interpolator.getValue(this.fromY, this.toY, this._elapsedTime, this.duration));
+			this._onFrame(dt);
+			}
+		}
+	},
+
+
+
+
+
+
 });

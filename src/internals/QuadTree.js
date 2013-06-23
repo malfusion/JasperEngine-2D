@@ -94,7 +94,7 @@ QUAD.init = function(args) {
 
                 if (nodes.length) {
                     // get the node in which the item fits best
-                    i = this.findInsertNode(item)
+                    i = this.findInsertNode(item);
                     if (i === PARENT) {
                         // if the item does not fit, push it into the
                         // children array

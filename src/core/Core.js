@@ -4,7 +4,7 @@ Handle createbehavior
 */
 
 
-Jasper.Core    = function(){
+Jasper.Core    = function(args){
 
     this.fps = 60;
     this.running = false;
@@ -12,8 +12,9 @@ Jasper.Core    = function(){
     this.lastTime = 0;
     
     this.canvas = null;
-    this.canvasWidth = 0;
-    this.canvasHeight = 0;
+    this.canvasWidth = args.canvasWidth;
+    this.canvasHeight = args.canvasHeight;
+    this.containerId = args.container;
     this.canvasContext = null;
     
     this.scenes = [];
@@ -30,17 +31,17 @@ Jasper.Core    = function(){
 
 Jasper.Core.prototype = {
 
-        _createCanvas: function(width, height){
+        _createCanvas: function(){
             this.canvas = document.createElement('canvas');
-            this.canvas.width = this.canvasWidth = width;
-            this.canvas.height = this.canvasHeight = height;
+            this.canvas.width = this.canvasWidth ;
+            this.canvas.height = this.canvasHeight ;
             this.canvas.onmousemove = function(e){ Jasper._mouseManager.mouseMove(e);};
             this.canvas.onmousedown = Jasper._mouseManager.mouseDown.bind(Jasper._mouseManager);
             this.canvas.onmouseup = Jasper._mouseManager.mouseUp.bind(Jasper._mouseManager);
             this.canvas.onclick = Jasper._mouseManager.mouseClick.bind(Jasper._mouseManager);
             this.canvas.ondblclick = Jasper._mouseManager.mouseDblClick.bind(Jasper._mouseManager);
             this.canvasContext = this.canvas.getContext('2d');
-            document.getElementById('container').appendChild(this.canvas);
+            document.getElementById(this.containerId).appendChild(this.canvas);
         },
 
         _render: function () {
@@ -51,24 +52,18 @@ Jasper.Core.prototype = {
         },
 
         _update : function (){
-            //console.log(this.lastTime);
-
+            
+            requestAnimFrame(this._update.bind(this));
+            
             currTime = new Date().getTime();
-            //console.log(this.currTime);
-            elapsedTime = currTime - this.lastTime;
+            dt = currTime - this.lastTime;
             this.lastTime=currTime;
             
-
-            //if(this.showFps)
-            //  console.log(elapsedTime);
-            if(this.running)
-                requestAnimFrame(this._update.bind(this));
-
-            //console.log('Frame');
-            if(this.activeScene instanceof Jasper.Scene){
-                this.activeScene._update(elapsedTime);
+            if(this.running){
+                this.activeScene._update(dt);
                 Jasper._mouseManager._activateCallbacks();
                 Jasper._collisionManager.calculateCollisions();
+                Jasper._animationManager._runAnimations(dt);
                 this._render();
             }
         },
@@ -85,19 +80,29 @@ Jasper.Core.prototype = {
         },
        
         
-        // expects 'width', 'height', 'fps'
-        init : function(args){
+        
+        init : function(){
+            Jasper._core = this;
+            
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
             Jasper._spriteManager = new Jasper.SpriteManager();
             Jasper._collisionManager = new Jasper.CollisionManager();
-            this._createCanvas(args.width, args.height);
-            this.setFps(args.fps || 30);
-            Jasper._core = this;
+            Jasper._animationManager = new Jasper.AnimationManager();
+            this._createCanvas();
             this._start();
+            return this;
         },
 
-       
+        pause: function(){
+            this.running = false;
+            return this;
+        },
+
+        play: function(){
+            this.running = true;
+            return this;
+        },
 
         getCanvas: function(){
             return this.canvas;
@@ -108,66 +113,84 @@ Jasper.Core.prototype = {
         },
 
         addScene: function(jasperScene){
-            if(this.scenes.indexOf(jasperScene) == -1)
-                this.scenes.push(jasperScene);
+            if(jasperScene instanceof Jasper.Scene){
+                if(this.scenes.indexOf(jasperScene) == -1){
+                    this.scenes.push(jasperScene);
+                    jasperScene._onAdd();
+                    return this;
+                }
+                
+            }
+            else
+                throw Error("Can only add a valid Jasper.Scene");
         },
         removeScene: function(jasperScene){
             if(this.activeScene == jasperScene){
-                console.log("Trying to remove currently active scene not permitted.");
-                return;
+                throw Error("Trying to remove currently active scene not permitted. end scene first");
             }
 
             var indx = this.scenes.indexOf(jasperScene);
-            if(indx != -1)
+            if(indx != -1){
+                this.scenes[indx]._onDestroy();
                 this.scenes.splice(indx,1);
+                return this;
+            }
 
         },
         removeSceneByName: function(jasperSceneName){
             if(this.activeScene.getSceneName() == jasperSceneName){
-                console.log("Trying to remove currently active scene not permitted.");
-                return;
+                throw Error("Trying to remove currently active scene not permitted.");
             }
             for (var i=0; i<this.scenes.length; i++){
-                if(this.scenes.getSceneName()==jasperSceneName){
+                if(this.scenes[i].getSceneName()==jasperSceneName){
                     this.scenes.splice(i,1);
+                    return this;
                 }
             }
         },
-        getScenes: function(){
-            return this.scenes;
+
+        getCurrentScene: function(){
+            return this.activeScene;
         },
 
         startScene: function(jasperScene){
-            this.activeScene = jasperScene;
+            if(jasperScene instanceof Jasper.Scene){
+                jasperScene._onStart();
+                this.activeScene = jasperScene;
+                return this;
+            }
+            else
+                throw Error("Can only start a valid Jasper.Scene");
         },
 
         endScene: function(){
             this.scenes.splice(this.scenes.indexOf(this.activeScene),1);
             this.activeScene = undefined;
+            return this;
+        },
 
+        getSceneByName: function(jasperSceneName){
+            for (var i=0; i<this.scenes.length; i++){
+                if(this.scenes[i].getSceneName()==jasperSceneName){
+                    return this.scenes[i];
+                }
+            }
         },
-/*
-        addBehaviorObjectPair: function(behaviorName, object){
-           return Jasper.BehaviorManager.addBehaviorToObject(behaviorName, object);
-        },
-        deleteBehaviorObjectPair: function(behaviorName, object){
-            Jasper.BehaviorManager.deleteBehaviorFromObject(behaviorName, object);
-        },
-        
 
-        objectId: function objectId(obj) {
-            if (obj==null) return null;
-            if (obj.__obj_id==null) obj.__obj_id=__next_objid++;
-            return obj.__obj_id;
+        getScenes: function(){
+            return this.scenes;
         },
-*/
-createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
+
+        createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
             var behaviorClass = Jasper.Behavior._createBehavior(behaviorVars, behaviorFuns);
             return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass);
-        },
-        setFps : function(engineFps){
+        }
+
+        /*
+        setFps: function(engineFps){
                        fps=engineFps;
-                    }
+        }
+                    */
 
 
 };

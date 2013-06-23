@@ -33,7 +33,8 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         render:function(ctx){
             if(this._loaded){
                 parent = this.getParentObject();
-                ctx.drawImage(this._sprite, parent.posX, parent.posY, parent.width, parent.height);
+                pos = parent.getViewportPos();
+                ctx.drawImage(this._sprite, pos[0], pos[1], parent.width, parent.height);
             }
         },      
 
@@ -53,10 +54,10 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
             return this;
         },
         getHeight: function(){
-            return this.getParentObject.height;
+            return this.getParentObject().height;
         },
         getWidth: function(){
-            return this.getParentObject.width;
+            return this.getParentObject().width;
         },
         getNativeHeight: function(){
             return this._nativeHeight;

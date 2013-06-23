@@ -5,31 +5,36 @@
 
 */
 
-Jasper.Layer = function(){
+Jasper.Layer = function(args){
+    this._name=args.name;
+
+    this._hud = false;
+    this._camera  = undefined;
+    if(args.hud !== undefined){
+        this._hud = true;
+    }
+    
     this._scene = null;
     this._layerNumber = -1;
 
-    this.worldSize={};
-    this.viewportSize={};
+    this.worldW=0;
+    this.worldH=0;
 
     this.objects = [];
     this.numObjects = 0;
 
 
-    this.onInit=function(){};
-    this.onUpdate=function(){};
-    this.onDestroy=function(){};
+    this.onAdd = function(){};
+    this.onObjectAdd = function(obj){};
+    this.onObjectRemove = function(obj){};
+    this.onUpdate = function(){};
+    this.onDestroy =function(){};
        
 };
 
 Jasper.Layer.prototype = {
 
-        init: function(args){
-            this.worldSize.x = args.worldX;
-            this.worldSize.y = args.worldY;
-
-        },
-
+        
         _update: function(dt){//layerNumber{
             //console.log('Layer '+layerNumber+" then "+numObjects);
             this.onUpdate();
@@ -43,37 +48,60 @@ Jasper.Layer.prototype = {
                 this.objects[i]._render(canvasContext);
             }
         },
+        _onAdd: function(){
+            this.onAdd();
+        },
+        _onStart: function(){
+            this.onStart();
+        },
+        _onDestroy: function(){
+            this.onDestroy();
+            var len=objects.length;
+            for(var i=0; i<len; i++){
+                objects[i]._onDestroy();
+            }
+            
+        },
+        _onObjectAdd: function(obj){
+            this.onObjectAdd(obj);
+        },
+        _onObjectRemove: function(obj){
+            this.onObjectRemove(obj);
+        },
 
-        setWorldSize: function(width,height){
-            this.worldSize.x=width; 
-            this.worldSize.y=height;
-        },
         getWorldSize: function(){
-            return this.worldSize;
+            return [this.worldW, this.worldH];
         },
-        setViewportSize: function(width,height){
-            this.viewportSize.x=width; 
-            this.viewportSize.y=height;
-        },
-        getViewportSize: function(){
-            return this.viewportSize;
-        },
+
         addObject: function(jasperObject){
             if(jasperObject instanceof Jasper.Object){
                 jasperObject._layer = this;
                 this.objects.push(jasperObject);
-
-                jasperObject._onAddedToLayer();
-                
                 this.numObjects++;
-            }
+
+                this._onObjectAdd(jasperObject);
+                jasperObject._onAddedToLayer();
+                return this;
+                
+            } 
             else{
-                console.log("Cannot add object of type : "+jasperObject.class+" ; needs JasperObject" );
+                throw Error("Cannot add object, needs JasperObject" );
             }
 
         },
-        removeObject: function(object){
 
+        removeObject: function(jasperObject){
+            if(jasperObject instanceof Jasper.Object){
+                var indx = this.objects.indexOf(jasperObject);
+                if(indx !== -1){
+                    obj=this.objects.splice(indx,1);
+                    this._onObjectRemove(obj);
+                }
+                return this;
+            }
+            else{
+                throw Error("Cannot remove object, needs JasperObject" );
+            }
         },
         getObjects: function(){
             return this.objects;
@@ -83,6 +111,12 @@ Jasper.Layer.prototype = {
         },
         getLayerNumber: function(){
             return this._layerNumber;
+        },
+        getCamera: function(){
+            return this._camera;
+        },
+        isHud: function(){
+            return this._hud;
         }
 
         

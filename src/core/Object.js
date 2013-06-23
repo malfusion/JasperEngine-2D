@@ -15,14 +15,17 @@ Jasper.Object = function(objectName){
     this._extraBehaviors={};
     this._rendererBehavior = null;
     
+    this._anims ={};
+
     this.visible = false;
     
     this.posX = 0;
     this.posY = 0;
     this.height = 0;
     this.width = 0; 
-    this.worldX = 0;
-    this.worldY = 0;
+    this._viewportX = 0;
+    this._viewportY = 0;
+    
     this.rotation = 0;
     this.alpha = 0;
 
@@ -70,6 +73,32 @@ Jasper.Object.prototype = {
             }
 
         },
+        _runAnimations: function(dt){
+            for (var key in this._anims) {
+                this._anims[key]._update(dt);
+            }
+            this._checkAnimationList();
+        },
+        _checkAnimationList: function(){
+            var empty = false;
+            for (var key in this._anims) {
+                if (hasOwnProperty.call(this._anims, key))    { empty =  false; break; }
+            }
+            if(empty){
+                Jasper._animationManager._unregisterObject(this);
+            }
+        },
+        removeAnimation: function(animName){
+            delete this._anims[animName];
+            this._checkAnimationList();
+        },
+        addAnimation: function(animName, attrs){
+            var anim = Jasper._animationManager._createAnimation(animName, attrs);
+            this._anims[animName] = anim;
+            anim._setParentObject(this);
+            Jasper._animationManager._registerObject(this);
+            return anim;
+        },
         _onAddedToLayer: function(){
             Jasper._collisionManager._clearWaiting(this);
         },
@@ -78,16 +107,23 @@ Jasper.Object.prototype = {
             return this.posX;
         },
         setPosX: function(posx){
-            this.posX=posx;
+            this.posX=Math.floor(posx);
         },
         getPosY:function(){
             return this.posY;
         },
         setPosY: function(posy){
-            this.posY=posy;
+            this.posY=Math.floor(posy);
+        },
+        getViewportPos: function(){
+            if(this.getLayer().isHud()){
+                return [this.getPosX(), this.getPosY()];
+            }else{
+                return this.getLayer().getCamera().getViewportPos(this);
+            }
         },
         setPos: function(x,y){
-            this.posX=x; this.posY=y;
+            this.posX=Math.floor(x); this.posY=Math.floor(y);
         },
         getAlpha:function(){
             return this.alpha;
