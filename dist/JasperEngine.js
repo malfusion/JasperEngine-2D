@@ -74,7 +74,99 @@ if (!Function.prototype.bind) {
         return fBound;
   };
 }
-;Jasper.Behavior = function(){
+;Jasper.Animation = function(){
+
+	this._name = "";
+	this._started = false;
+	this._paused = true;
+	this._elapsedTime = 0 ;
+	this._object = null;
+
+	//the public variable is the name
+	
+	this.interpolator = "linear";
+	this._interpolator = null;
+	this.duration = Jasper.Constants.ANIM_SHORT_DURATION;
+
+	this.onStart = function(){};
+	this.onFrame = function(dt){};
+	this.onPause = function(){};
+	this.onResume = function(){};
+	this.onEnd = function(){};
+
+};
+
+
+Jasper.Animation.prototype = {
+	_setParentObject: function(obj){
+		this._object = obj;
+	},
+	getParentObject: function(){
+		return this._object;
+	},
+	getAnimName: function(){
+		return this._name;
+	},
+	_setInterpolator: function(interpolator){
+		if(interpolator instanceof Jasper.Interpolator){
+			this._interpolator = interpolator;
+		}
+		else{
+			throw Error("Not a valid interpolator");
+		}
+	},
+	setOnStart: function(func){
+		this.onStart = func;
+	},
+	setOnFrame: function(func){
+		this.onFrame = func;
+	},
+	setOnPause: function(func){
+		this.onPause = func;
+	},
+	setOnResume: function(func){
+		this.onResume = func;
+	},
+	setOnEnd: function(func){
+		this.onEnd = func;
+	},
+	_onStart: function(){
+		this._started = true;
+		this._paused = false;
+		this.onStart();
+	},
+	_onPause: function(){
+		this._paused = true;
+		this.onPause();
+	},
+	_onResume: function(){
+		this._paused = false;
+		this.onResume();
+	},
+	_onEnd: function(){
+		this.started = false;
+		this.getParentObject().removeAnimation(this.getAnimName());
+		this.onEnd();
+	},
+	_onFrame: function(dt){
+		this.onFrame(dt);
+	},
+	_update: function(dt){
+		this._onFrame(dt);
+	},
+	start: function(){
+		this._started = true;
+		this._paused = false;
+		this._onStart();
+	},
+	reset: function(){
+		this._started = false;
+		this._paused = true;
+		this._elapsedTime = 0;
+	}
+	
+
+};;Jasper.Behavior = function(){
 	this._parent = null;
 	
 }; 
@@ -651,6 +743,14 @@ Jasper.Core.prototype = {
 
 };
 
+;Jasper.Interpolator = function(){
+	
+};
+
+
+Jasper.Interpolator.prototype = {
+	getValue: function(){}
+};
 ;/*
 *TODO: add object id calc in Jasper.Object
         remove objects
@@ -907,6 +1007,20 @@ Jasper.Object.prototype = {
         setAlpha: function(val){
             this.alpha=val;
         },
+        getRotationAngle:function(){
+            return this.rotation*180/Math.PI;
+        },
+        setRotationAngle: function(val){
+            this.rotation=val*Math.PI/180;
+        },
+        getRotationRadian: function(){
+            return this.rotation;
+        },
+        setRotationARadian: function(val){
+            this.rotation=val;
+        },
+
+
         getLayer:function(){
             return this._layer;
         },
@@ -1192,11 +1306,16 @@ Jasper.SpriteManager.prototype = {
 	
 	this._objectsToAnimate = [];
 	this._animLookup = {
-		"move": Jasper.MoveAnimation
+		"move": Jasper.MoveAnimation,
+		"movex": Jasper.MoveXAnimation,
+		"movey": Jasper.MoveYAnimation,
+		"alpha": Jasper.AlphaAnimation,
+		"rotate": Jasper.RotateAnimation
 	};
 
 	this._interpolatorLookup = {
-		"linear": Jasper.LinearInterpolator
+		"linear": Jasper.LinearInterpolator,
+		"swing": Jasper.SwingInterpolator
 	};
 
 
@@ -2138,107 +2257,41 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
             }
         }
      
-});;Jasper.Animation = function(){
-
-	this._name = "";
-	this._started = false;
-	this._paused = true;
-	this._elapsedTime = 0 ;
-	this._object = null;
-
-	//the public variable is the name
-	
-	this.interpolator = "linear";
-	this._interpolator = null;
-	this.duration = Jasper.Constants.ANIM_SHORT_DURATION;
-
-	this.onStart = function(){};
-	this.onFrame = function(dt){};
-	this.onPause = function(){};
-	this.onResume = function(){};
-	this.onEnd = function(){};
-
+});;Jasper.AlphaAnimation = function(){
+	this._name = "alpha";
+	this.fromAlpha = null;
+	this.toAlpha = null;
 };
 
 
-Jasper.Animation.prototype = {
-	_setParentObject: function(obj){
-		this._object = obj;
-	},
-	getParentObject: function(){
-		return this._object;
-	},
-	getAnimName: function(){
-		return this._name;
-	},
-	_setInterpolator: function(interpolator){
-		if(interpolator instanceof Jasper.Interpolator){
-			this._interpolator = interpolator;
-		}
-		else{
-			throw Error("Not a valid interpolator");
-		}
-	},
-	setOnStart: function(func){
-		this.onStart = func;
-	},
-	setOnFrame: function(func){
-		this.onFrame = func;
-	},
-	setOnPause: function(func){
-		this.onPause = func;
-	},
-	setOnResume: function(func){
-		this.onResume = func;
-	},
-	setOnEnd: function(func){
-		this.onEnd = func;
-	},
-	_onStart: function(){
-		this._started = true;
-		this._paused = false;
-		this.onStart();
-	},
-	_onPause: function(){
-		this._paused = true;
-		this.onPause();
-	},
-	_onResume: function(){
-		this._paused = false;
-		this.onResume();
-	},
-	_onEnd: function(){
-		this.started = false;
-		this.getParentObject().removeAnimation(this.getAnimName());
-		this.onEnd();
-	},
-	_onFrame: function(dt){
-		this.onFrame(dt);
-	},
+
+Jasper.AlphaAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.AlphaAnimation.prototype, {
+
 	_update: function(dt){
-		this._onFrame(dt);
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				this.getParentObject().setAlpha(this.toAlpha);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+			this.getParentObject().setAlpha(
+				this._interpolator.getValue(this.fromAlpha, this.toAlpha, this._elapsedTime, this.duration));
+			this._onFrame(dt);
+			}
+		}
 	},
-	start: function(){
-		this._started = true;
-		this._paused = false;
-		this._onStart();
-	},
-	reset: function(){
-		this._started = false;
-		this._paused = true;
-		this._elapsedTime = 0;
-	}
-	
-
-};;Jasper.Interpolator = function(){
-	
-};
 
 
-Jasper.Interpolator.prototype = {
-	getValue: function(){}
-};
-;Jasper.LinearInterpolator = function(){
+
+
+
+
+});;Jasper.LinearInterpolator = function(){
 	
 };
 
@@ -2267,6 +2320,7 @@ Jasper.MoveAnimation.prototype = new Jasper.Animation();
 
 Object.extend(Jasper.MoveAnimation.prototype, {
 
+
 	_update: function(dt){
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
@@ -2289,4 +2343,147 @@ Object.extend(Jasper.MoveAnimation.prototype, {
 
 
 
+});;Jasper.MoveXAnimation = function(){
+	this._name = "movex";
+	this.fromX = null;
+	this.toX = null;
+};
+
+
+
+Jasper.MoveXAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.MoveXAnimation.prototype, {
+
+
+	_update: function(dt){
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				this.getParentObject().setPosX(this.toX);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+			this.getParentObject().setPosX(
+				this._interpolator.getValue(this.fromX, this.toX, this._elapsedTime, this.duration)
+				);
+			this._onFrame(dt);
+			}
+		}
+	},
+
+
+
+
+
+
+});;Jasper.MoveYAnimation = function(){
+	this._name = "movey";
+	this.fromY = null;
+	this.toY = null;
+};
+
+
+
+Jasper.MoveYAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.MoveYAnimation.prototype, {
+
+
+	_update: function(dt){
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				this.getParentObject().setPosY(this.toY);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+			this.getParentObject().setPosY(
+				this._interpolator.getValue(this.fromY, this.toY, this._elapsedTime, this.duration)
+				);
+			this._onFrame(dt);
+			}
+		}
+	},
+
+
+
+
+
+
+});;Jasper.RotateAnimation = function(){
+	this._name = "rotate";
+	this.fromRadian = null;
+	this.fromAngle = null;
+	this.toRadian = null;
+	this.toAngle = null;
+};
+
+
+
+Jasper.RotateAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.RotateAnimation.prototype, {
+
+	_update: function(dt){
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				this._setRotation(true);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+			this._setRotation();
+			this._onFrame(dt);
+			}
+		}
+	},
+
+	_setRotation: function(final){
+		if(this.fromRadian === null && this.toRadian === null){
+			if(final)
+				this.getParentObject().setRotationAngle(this.toAngle);
+			else
+				this.getParentObject().setRotationAngle(
+					this._interpolator.getValue(
+						this.fromAngle, this.toAngle, this._elapsedTime, this.duration
+						)
+					);
+		}
+		else{
+			if(final)
+				this.getParentObject().setRotation(this.toRadian);
+			else
+				this.getParentObject().setRotation(
+					this._interpolator.getValue(
+						this.fromRadian, this.toRadian, this._elapsedTime, this.duration
+						)
+					);
+		}
+	}
+
+
+
+
+
+
+});;Jasper.SwingInterpolator = function(){
+	
+};
+
+Jasper.SwingInterpolator.prototype = new Jasper.Interpolator();
+
+
+Object.extend(Jasper.SwingInterpolator.prototype, {
+
+	getValue: function(start, end, elapsed , dur){
+		return start + (end-start) * ((- Math.cos(elapsed/dur * Math.PI) / 2) + 0.5);
+	}
+		
 });

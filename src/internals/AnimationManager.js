@@ -10,7 +10,8 @@ Jasper.AnimationManager = function(){
 	};
 
 	this._interpolatorLookup = {
-		"linear": Jasper.LinearInterpolator
+		"linear": Jasper.LinearInterpolator,
+		"swing": Jasper.SwingInterpolator
 	};
 
 

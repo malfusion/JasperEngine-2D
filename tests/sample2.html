@@ -61,7 +61,8 @@
                     fromY:hover.getPosY(), 
                     toX:hover.getPosX()+300, 
                     toY:hover.getPosY()+300,
-                    duration: 1000
+                    duration: 2000,
+                    interpolator:"swing"
                 });
             anim.start();
             anim.setOnEnd((function(hover){

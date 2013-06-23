@@ -1,4 +1,4 @@
-r.RotateAnimation = function(){
+Jasper.RotateAnimation = function(){
 	this._name = "rotate";
 	this.fromRadian = null;
 	this.fromAngle = null;
@@ -29,7 +29,7 @@ Object.extend(Jasper.RotateAnimation.prototype, {
 	},
 
 	_setRotation: function(final){
-		if(this.fromRadian == null && this.toRadian == null){
+		if(this.fromRadian === null && this.toRadian === null){
 			if(final)
 				this.getParentObject().setRotationAngle(this.toAngle);
 			else
