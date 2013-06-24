@@ -99,6 +99,15 @@ Jasper.Object.prototype = {
             Jasper._animationManager._registerObject(this);
             return anim;
         },
+        getAnimation: function(animName){
+            if(this._anims[animName] !== undefined){
+                return this._anims[animName];
+            }
+            else{
+                console.log("Animation does not exist in object");
+                return ;
+            }
+        },
         _onAddedToLayer: function(){
             Jasper._collisionManager._clearWaiting(this);
         },
@@ -115,6 +124,19 @@ Jasper.Object.prototype = {
         setPosY: function(posy){
             this.posY=Math.floor(posy);
         },
+        setHeight: function(h){
+            this.height=h;
+        },
+        setWidth: function(w){
+            this.width=w;
+        },
+        getHeight: function(){
+            return this.height;
+        },
+        getWidth: function(){
+            return this.width;
+        },
+        
         getViewportPos: function(){
             if(this.getLayer().isHud()){
                 return [this.getPosX(), this.getPosY()];

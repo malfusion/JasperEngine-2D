@@ -83,7 +83,13 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         getScaleY: function(){
             return this._scaleY;
         },
+        _setLoaded: function(loaded){
+            this._loaded = loaded;
+        },
         _adjustDimensions: function(){
+            
+                this._nativeWidth = this._sprite.width;
+                this._nativeHeight = this._sprite.height;
             if(this._toAdjust){
                 parent = this.getParentObject();
                 parent.width=Math.floor(this._nativeWidth*this._scaleX);

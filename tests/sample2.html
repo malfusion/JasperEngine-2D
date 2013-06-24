@@ -48,6 +48,7 @@
     var layer1 = new Jasper.Layer({name:"hovering", hud:true});
     gameScene.addLayer(layer1);
 
+    var hovers= [];
 
     for(var i=0; i<10; i++){
         for(var j=0;j<10;j++){
@@ -55,31 +56,77 @@
             hover.addBehavior("sprite").setSprite("../assets/evil.png").setHeight(20).setWidth(20);
             hover.setPos(i*25, j*25);
             layer0.addObject(hover);
+            hovers.push(hover);
+        }
+    }
+    for(var i=0; i<10; i++){
+        for(var j=0;j<10;j++){
+            var man = new Jasper.Object("man");
+            man.setPos(i*100, j*100);
+            man.addBehavior("spritesheet").attr({
+            spritesheet : "../assets/man_run.png",
+            actions: {
+                run: {
+                    from:0,
+                    to:69,
+                    duration: 1000,
+                    loop: true
+                },
+                walk: {
+                    from:1,
+                    to:4,
+                    loop: false
+                },
+                jump: {
+                    frames:[8,9,10,11,12],
+                    loop: false
+                },
+                stand: {
+                    frames: [1],
+                    loop: false
+                }
+            },
+            frameWidth: 180,
+            frameHeight: 340,
+            width:45,
+            height:85
+
+        }).runAction("run");
+
+            if(i%2==0)
+                layer1.addObject(man);
+            else 
+                layer0.addObject(man);
             
-            anim = hover.addAnimation("move",{
-                    fromX:hover.getPosX(), 
-                    fromY:hover.getPosY(), 
-                    toX:hover.getPosX()+300, 
-                    toY:hover.getPosY()+300,
+        }
+
+    }
+    
+    
+
+    for(var i=0; i<hovers.length; i++){
+        anim = hovers[i].addAnimation("move",{
+                    fromX:hovers[i].getPosX(), 
+                    fromY:hovers[i].getPosY(), 
+                    toX:hovers[i].getPosX()+300, 
+                    toY:hovers[i].getPosY()+300,
                     duration: 2000,
                     interpolator:"swing"
                 });
             anim.start();
-            anim.setOnEnd((function(hover){
+            anim.setOnEnd(function(){
                 //console.log(this);
-                return function(){
-                    anim=hover.addAnimation("move",{
-                    fromX:hover.getPosX(), 
-                    fromY:hover.getPosY(), 
+                console.log(i);
+                    parent  = this.getParentObject();
+                    anim=this.getParentObject().addAnimation("move",{
+                    fromX:parent.getPosX(), 
+                    fromY:parent.getPosY(), 
                     toX:200, 
                     toY:200,
                     duration: 2000
                 });
                 anim.start();
-            }
-            })(hover));
-            
-        }
+            });
     }
 
 

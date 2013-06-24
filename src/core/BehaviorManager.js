@@ -15,6 +15,7 @@ Jasper.BehaviorManager = function () {
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior,
         'sprite': Jasper.SpriteBehavior,
+        'spritesheet': Jasper.SpriteSheetBehavior,
         'collision': Jasper.CollisionBehavior
     };
 
