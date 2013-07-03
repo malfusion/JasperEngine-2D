@@ -1,9 +1,12 @@
 
+
+
+/**
+ * @module Jasper
+ * 
+ */
 var Jasper = function(){
-
-
-
-
+  
 };
 
 

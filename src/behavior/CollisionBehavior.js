@@ -8,10 +8,11 @@ Jasper.CollisionBehavior.prototype = new Jasper.Behavior();
 
 Object.extend(Jasper.CollisionBehavior.prototype,{
 
-        init: function(object){
+        _init: function(object){
             Jasper._behaviorManager._addNonUpdateBehavior('collision');
             Jasper._collisionManager._registerCollidableObject(this.getParentObject());
             //Jasper._mouseManager.registerCallbackObject(object);
+            this.onInit();
         },
 
         setOnCollide: function(collideFunc){

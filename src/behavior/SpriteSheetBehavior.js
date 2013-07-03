@@ -123,10 +123,8 @@ Jasper.SpriteSheetBehavior = function(){
 Jasper.SpriteSheetBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.SpriteSheetBehavior.prototype, {
-        init:function(){
-            
-        },
-        attr: function(args){
+       
+        _attr: function(args){
             if(args.spritesheet === undefined || args.actions === undefined ||
             args.frameWidth === undefined || args.frameHeight === undefined){
 
@@ -137,6 +135,7 @@ Object.extend(Jasper.SpriteSheetBehavior.prototype, {
 
             for(var action in args.actions){
                 var actObj = {};
+                actObj.name = action;
                 if(args.actions[action].loop !== undefined)
                     actObj.loop = args.actions[action].loop ;
                 else
@@ -214,6 +213,7 @@ Object.extend(Jasper.SpriteSheetBehavior.prototype, {
             this._currentAction = frame;
         },
         runAction: function(action){
+           
             this._currentAction = this.actions[action]._reset();
         },
         pause: function(){

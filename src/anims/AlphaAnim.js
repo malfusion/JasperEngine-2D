@@ -15,6 +15,13 @@ Object.extend(Jasper.AlphaAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setAlpha(
+						this._interpolator.getValue(this.fromAlpha, this.toAlpha, this._elapsedTime, this.duration));
+					this._onFrame(dt);
+					return;	
+				}
 				this.getParentObject().setAlpha(this.toAlpha);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -25,7 +32,7 @@ Object.extend(Jasper.AlphaAnimation.prototype, {
 			this._onFrame(dt);
 			}
 		}
-	},
+	}
 
 
 

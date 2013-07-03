@@ -28,6 +28,7 @@ Jasper.CollisionManager.prototype = {
         }
         catch(c){
             console.log(obj);
+            throw Error(c);
         }
         if(this._layerNum_QuadTree[obj.getLayer().getLayerNumber()] === undefined){
 
@@ -83,7 +84,7 @@ Jasper.CollisionManager.prototype = {
 
 
     calculateCollisions: function(){
-        //console.log("count:"+this.count);
+       //console.log("count:"+this.count);
         this.count=0;
         for(var layerNum in this._layerNum_QuadTree){
 
@@ -120,7 +121,7 @@ Jasper.CollisionManager.prototype = {
 
                 var collidedObjs = tree.retrieve(search, function(item){
                    // Jasper._collisionManager.count++;
-                   // 
+                    //this.count++;
                     if(search != item){
                         if  (search.x < (item.x + item.w) && 
                             (search.x+search.w) > item.x && 

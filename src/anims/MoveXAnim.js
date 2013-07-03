@@ -16,6 +16,14 @@ Object.extend(Jasper.MoveXAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setPosX(
+						this._interpolator.getValue(this.fromX, this.toX, this._elapsedTime, this.duration)
+						);
+					this._onFrame(dt);	
+					return;	
+				}
 				this.getParentObject().setPosX(this.toX);
 				this._onFrame(dt);
 				this._onEnd(dt);

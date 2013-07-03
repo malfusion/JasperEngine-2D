@@ -22,18 +22,16 @@ Jasper.PolygonDrawBehavior = function(){
 Jasper.PolygonDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.PolygonDrawBehavior.prototype, {
-        init:function(){
-
-        },
+        
         update: function(dt){},
 
         render:function(ctx){
             parent = this.getParentObject();
-
+            pos = parent.getViewportPos();
             ctx.beginPath();
-            ctx.moveTo(this._points[0][0], this._points[0][1]);
+            ctx.moveTo(pos[0], pos[1]);
             for (var i=0; i<this._numPoints; i++){
-                ctx.lineTo(this._points[this._numPoints][0], this._points[this._numPoints][1]);
+                ctx.lineTo(pos[0] + this._points[i][0], pos[1]+ this._points[i][1]);
             }
             ctx.closePath();
 
@@ -89,15 +87,14 @@ Object.extend(Jasper.PolygonDrawBehavior.prototype, {
         },
         setFillColor: function(r,g,b,a){
 
-            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
                 this.fillColor = r;
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
-                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
-                this.getParentObject().setAlpha(a);
-                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
             return this;
         },

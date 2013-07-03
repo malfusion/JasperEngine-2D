@@ -6,7 +6,8 @@ Jasper.AnimationManager = function(){
 		"movex": Jasper.MoveXAnimation,
 		"movey": Jasper.MoveYAnimation,
 		"alpha": Jasper.AlphaAnimation,
-		"rotate": Jasper.RotateAnimation
+		"rotate": Jasper.RotateAnimation,
+		"size": Jasper.SizeAnimation
 	};
 
 	this._interpolatorLookup = {

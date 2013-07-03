@@ -11,6 +11,7 @@ Jasper.Animation = function(){
 	this.interpolator = "linear";
 	this._interpolator = null;
 	this.duration = Jasper.Constants.ANIM_SHORT_DURATION;
+	this.loop = false;
 
 	this.onStart = function(){};
 	this.onFrame = function(dt){};

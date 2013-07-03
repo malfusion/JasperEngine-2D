@@ -1,9 +1,12 @@
 
+
+
+/**
+ * @module Jasper
+ * 
+ */
 var Jasper = function(){
-
-
-
-
+  
 };
 
 
@@ -87,6 +90,7 @@ if (!Function.prototype.bind) {
 	this.interpolator = "linear";
 	this._interpolator = null;
 	this.duration = Jasper.Constants.ANIM_SHORT_DURATION;
+	this.loop = false;
 
 	this.onStart = function(){};
 	this.onFrame = function(dt){};
@@ -171,21 +175,39 @@ Jasper.Animation.prototype = {
 	
 }; 
 
-Jasper.Behavior.prototype.init = function(){};
-Jasper.Behavior.prototype.update=function(){};
-Jasper.Behavior.prototype.getParentObject = function(){
-                        return this._parent;
-                    };
+Object.extend(Jasper.Behavior.prototype, {
+	attr : function(args){ 
+		this._attr(args); 
+		return this;
+	},
+	locals: function(args){
+		Object.extend(this, args); 
+	},
+	_attr : function(args){},
+
+	update : function(){
+		this.onUpdate();
+	},
+
+	getParentObject  :  function(){
+        return this._parent;
+	},
+	_init: function(){ 
+		this.onInit();
+	},
+    onInit : function(){},
+    onUpdate : function(){},
+    onRemove : function(){}
+});
 
 
-Jasper.Behavior._createBehavior = function(varsObj, funsObj){
-	var temp = new Jasper.Behavior();
-	Object.extend(temp, funsObj);
 
+Jasper.Behavior._createBehavior = function(funsObj){
 	var newBeh = function(){};
-	newBeh.prototype = temp;
+	newBeh.prototype = new Jasper.Behavior();
 
 	Object.extend(newBeh.prototype, funsObj);
+	
     return newBeh;
 
 
@@ -200,18 +222,48 @@ Jasper.RenderableBehavior = function(){
 
 Jasper.RenderableBehavior.prototype = new Jasper.Behavior();
 
-Jasper.RenderableBehavior.prototype.renderBefore = function(ctx){
-	ctx.save();
-};
+Object.extend(Jasper.RenderableBehavior.prototype, {
+	renderBefore : function(ctx){
+		ctx.save();
+		parent = this.getParentObject();
+		pos = parent.getViewportPos();
+		ctx.translate( pos[0] , pos[1]  );
+		ctx.rotate( parent.getRotationRadian() );
+		ctx.translate( -pos[0] , -pos[1]  );
+		ctx.globalAlpha = parent.getAlpha();
+		
+	},
 
-Jasper.RenderableBehavior.prototype.renderAfter = function(ctx){
-	ctx.restore();
-};
+	renderAfter : function(ctx){
+		ctx.restore();
+	},
 
-Jasper.RenderableBehavior.prototype.render = function(){};
+	render : function(){},
 
+    setWidth: function(width){
+        this.getParentObject().setWidth(width);
+        return this;
+    },
+    setHeight: function(height){
+        this.getParentObject().setHeight(height);
+        return this;
+    },
+    setPosX: function(x){
+		this.getParentObject().setPosX(x);
+		return this;
+    },
+    setPosY: function(y){
+		this.getParentObject().setPosY(y);
+		return this;
+    },
+    setPos: function(x,y){
+		this.getParentObject().setPos(x,y);
+		return this;
+    }
 
-Jasper.RenderableBehavior._createRenderBehavior = function(varsObj, funsObj){
+});
+
+Jasper.RenderableBehavior._createRenderBehavior = function(funsObj){
 	var temp = new Jasper.RenderableBehavior();
 	Object.extend(temp, funsObj);
 
@@ -219,6 +271,7 @@ Jasper.RenderableBehavior._createRenderBehavior = function(varsObj, funsObj){
 	newBeh.prototype = temp;
 
 	Object.extend(newBeh.prototype, funsObj);
+
     return newBeh;
 
 
@@ -236,14 +289,18 @@ Jasper.BehaviorManager = function () {
         //'move': MoveBehavior,
         'circle': Jasper.CircleDrawBehavior,
         'rect': Jasper.RectangleDrawBehavior,
+        'polygon': Jasper.PolygonDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior,
         'sprite': Jasper.SpriteBehavior,
         'spritesheet': Jasper.SpriteSheetBehavior,
-        'collision': Jasper.CollisionBehavior
+        'collision': Jasper.CollisionBehavior,
+        'text': Jasper.TextDrawBehavior
     };
 
     this._nonUpdateBehaviors = ['mouse', 'collision'];
+
+    this._beh_attrs = {};
 
 };
 
@@ -253,19 +310,22 @@ Jasper.BehaviorManager.prototype = {
     _addBehaviorToObject: function (behaviorName, object) {
         if (typeof (behaviorName) == "string") {
             if (hasOwnProperty(this._name_beh, behaviorName)) {
-
+                
                 var behavior = new this._name_beh[behaviorName]();
+                if(this._beh_attrs[behaviorName] !== undefined){
+                    Object.extend(behavior,this._beh_attrs[behaviorName]);
+                }
 
                 if (this._beh_BehObjPairs[behaviorName] === undefined) {
                     this._beh_BehObjPairs[behaviorName] = [];
                 }
                 this._beh_BehObjPairs[behaviorName].push([behavior, object]);
 
-                console.log("returning behavior", behavior);
+                //console.log("returning behavior", behavior);
 
-                if (typeof (behavior.init) == "undefined") {
-                    behavior.prototype.init = function (object) {};
-                }
+                //if (typeof (behavior.init) == "undefined") {
+                //    behavior.prototype.init = function (object) {};
+                //}
                 //behavior.init(object); //TODO: Add behavior init functionality for each behavior
                 return behavior;
             } else {
@@ -278,7 +338,7 @@ Jasper.BehaviorManager.prototype = {
 
     },
 
-    _createBehavior: function (behaviorName, behaviorClass) {
+    _createBehavior: function (behaviorName, behaviorClass, behaviorAttrs) {
         if (typeof (behaviorName) == "string") {
             if (hasOwnProperty(this._name_beh, behaviorName)) {
                 console.log("Behavior name already present : " + behaviorName);
@@ -286,6 +346,9 @@ Jasper.BehaviorManager.prototype = {
             } else {
                 //contents.class = "JasperBehavior";
                 this._name_beh[behaviorName] = behaviorClass;
+                if(behaviorAttrs !== undefined){
+                    this._beh_attrs[behaviorName] = behaviorAttrs;
+                }
 
                 return behaviorName;
             }
@@ -372,6 +435,9 @@ Jasper.Camera.prototype = {
 	getCameraY: function(){
 		return this.posY;
 	},
+	getCameraPos: function(){
+		return [this.posX, this.posY];
+	},
 
 
 	followObject: function(obj, offsetX, offsetY){
@@ -379,7 +445,7 @@ Jasper.Camera.prototype = {
 	},
 
 	getViewportPos: function(obj){
-		return [obj.getPosX()-this.getCameraX(), obj.getPosY()-this.getCameraY()];
+		return [obj.getPosX()-this.posX, obj.getPosY()-this.posY];
 	}
 
 
@@ -415,6 +481,7 @@ Jasper.CollisionManager.prototype = {
         }
         catch(c){
             console.log(obj);
+            throw Error(c);
         }
         if(this._layerNum_QuadTree[obj.getLayer().getLayerNumber()] === undefined){
 
@@ -470,7 +537,7 @@ Jasper.CollisionManager.prototype = {
 
 
     calculateCollisions: function(){
-        //console.log("count:"+this.count);
+       //console.log("count:"+this.count);
         this.count=0;
         for(var layerNum in this._layerNum_QuadTree){
 
@@ -507,7 +574,7 @@ Jasper.CollisionManager.prototype = {
 
                 var collidedObjs = tree.retrieve(search, function(item){
                    // Jasper._collisionManager.count++;
-                   // 
+                    //this.count++;
                     if(search != item){
                         if  (search.x < (item.x + item.w) && 
                             (search.x+search.w) > item.x && 
@@ -547,10 +614,42 @@ Jasper.CollisionManager.prototype = {
 
     
 
-};;/*
-Handle createbehavior
+};;
 
-*/
+/**
+ *
+ * ###The main component of the Jasper Engine. 
+ * 
+ * When a new instance of this class is constructed, the new canvas is created and 
+ * the all of the internal manager components are initialised. 
+ *
+ * Jasper.Scene objects are added to the core as a next level of hierarchy.
+ * 
+ * This class provides access to :
+ * Jasper.MouseManager
+ * DOM Canvas
+ * SceneList
+ * 
+ * 
+ * The init() must be called on this object to start the engine core loop.
+ *
+ * 
+ * @class Jasper.Core
+ * @constructor
+ * @param {Object} args                 An object containing options for initialising the Core object.
+ * @param {Number} args.canvasWidth     The width of the canvas required
+ * @param {Number} args.canvasHeight    The height of the canvas required
+ * @param {String} args.container       The id of the container div that will contain the canvas
+ * @param {String} args.canvasId        The id of the canvas to be created
+ *
+ * @example
+ *     var gameCore = new Jasper.Core({
+ *     canvasWidth: 500,
+ *     canvasHeight: 500,
+ *     container: "contDiv",
+ *     canvasId: "mycanvas"
+ *     }).init();
+ */
 
 
 Jasper.Core    = function(args){
@@ -564,6 +663,7 @@ Jasper.Core    = function(args){
     this.canvasWidth = args.canvasWidth;
     this.canvasHeight = args.canvasHeight;
     this.containerId = args.container;
+    this.canvasId = args.canvasId;
     this.canvasContext = null;
     
     this.scenes = [];
@@ -571,6 +671,8 @@ Jasper.Core    = function(args){
 
     this. __next_objid=1;
     this.onInit = function(){};
+    Jasper._core = this;
+
 
     //this. core;
     //this. behaviorManager;
@@ -582,6 +684,7 @@ Jasper.Core.prototype = {
 
         _createCanvas: function(){
             this.canvas = document.createElement('canvas');
+            this.canvas.id = this.canvasId;
             this.canvas.width = this.canvasWidth ;
             this.canvas.height = this.canvasHeight ;
             this.canvas.onmousemove = function(e){ Jasper._mouseManager.mouseMove(e);};
@@ -630,8 +733,12 @@ Jasper.Core.prototype = {
        
         
         
+        /**
+         * Start the JasperEngine core loop.
+         * @method init
+         * @chainable
+         */
         init : function(){
-            Jasper._core = this;
             
             Jasper._mouseManager = new Jasper.Mouse();
             Jasper._behaviorManager = new Jasper.BehaviorManager();
@@ -643,24 +750,52 @@ Jasper.Core.prototype = {
             return this;
         },
 
+        /**
+         * Pause the game core loop.
+         * @method pause
+         * @chainable
+         */
+
         pause: function(){
             this.running = false;
             return this;
         },
 
-        play: function(){
+        /**
+         * Resume the game core loop.
+         * @method resume
+         * @chainable
+         */
+        resume: function(){
             this.running = true;
             return this;
         },
 
+        /**
+         * Get the canvas DOM Object that is created and used by the engine.
+         * @method getCanvas
+         * @return {Canvas DOM Object} The canvas DOM object.
+         */
         getCanvas: function(){
             return this.canvas;
         },
 
+
+        /**
+         * Get the Jasper.MouseManager object. It gives access to the mouse position.
+         * @method getMouseManager
+         * @return {Jasper.MouseManager} The global Jasper.MouseManager Object used by the engine
+         */
         getMouseManager: function(){
             return Jasper._mouseManager;
         },
 
+        /**
+         * Add a scene to the engine core's Scenelist.
+         * @method addScene
+         * @param  {Jasper.Scene} jasperScene The scene to be added
+         * @chainable
+         */
         addScene: function(jasperScene){
             if(jasperScene instanceof Jasper.Scene){
                 if(this.scenes.indexOf(jasperScene) == -1){
@@ -673,6 +808,13 @@ Jasper.Core.prototype = {
             else
                 throw Error("Can only add a valid Jasper.Scene");
         },
+
+        /**
+         * Remove a scene from the engine core's Scenelist
+         * @method removeScene
+         * @param  {Jasper.Scene} jasperScene The scene to be removed
+         * @chainable
+         */
         removeScene: function(jasperScene){
             if(this.activeScene == jasperScene){
                 throw Error("Trying to remove currently active scene not permitted. end scene first");
@@ -686,6 +828,12 @@ Jasper.Core.prototype = {
             }
 
         },
+        /**
+         * Remove a scene from the game core's Scenelist, providing the name of the scene to be removed
+         * @method removeSceneByName
+         * @param  {String} jasperSceneName The name of the scene to be removed
+         * @chainable
+         */
         removeSceneByName: function(jasperSceneName){
             if(this.activeScene.getSceneName() == jasperSceneName){
                 throw Error("Trying to remove currently active scene not permitted.");
@@ -698,10 +846,21 @@ Jasper.Core.prototype = {
             }
         },
 
+        /**
+         * Get the currently running scene
+         * @method getCurrentScene
+         * @return {Jasper.Scene} The currently running Jasper.Scene object
+         */
         getCurrentScene: function(){
             return this.activeScene;
         },
 
+        /**
+         * Start the scene passed as argumemt
+         * @method startScene
+         * @param  {Jasper.Scene} jasperScene The Jasper.Scene object to start. Must already be in the scenelist
+         * @chainable
+         */
         startScene: function(jasperScene){
             if(jasperScene instanceof Jasper.Scene){
                 jasperScene._onStart();
@@ -712,12 +871,24 @@ Jasper.Core.prototype = {
                 throw Error("Can only start a valid Jasper.Scene");
         },
 
+        /**
+         * End the currently running scene
+         * @method endScene
+         * @chainable
+         */
         endScene: function(){
-            this.scenes.splice(this.scenes.indexOf(this.activeScene),1);
-            this.activeScene = undefined;
+            if(this.activeScene !== undefined){
+                this.scenes.splice(this.scenes.indexOf(this.activeScene),1);
+                this.activeScene = undefined;
+            }
             return this;
         },
-
+        /**
+         * Get the scene having the given name from the SceneList
+         * @method getSceneByName
+         * @param  {String} jasperSceneName Name of the scene to get
+         * @return {Jasper.Scene}                 The scene object having the given name
+         */
         getSceneByName: function(jasperSceneName){
             for (var i=0; i<this.scenes.length; i++){
                 if(this.scenes[i].getSceneName()==jasperSceneName){
@@ -725,14 +896,26 @@ Jasper.Core.prototype = {
                 }
             }
         },
-
+        /**
+         * Get the SceneList from the game core
+         * @method getScenes
+         * @return {Array<Jasper.Scene>} The array of Jasper.Scene objects taht have been added to the core.
+         */
         getScenes: function(){
             return this.scenes;
         },
 
+        /**
+         * Create and register a custom behavior to the core. This behavior can be used by any object, by using Jasper.Object.addBehavior(behaviorName) 
+         * @method createBehavior
+         * @param  {String} behaviorName Name of the behavior to be registered
+         * @param  {Object} behaviorVars Object containing the variables to be used by the behavior
+         * @param  {Object} behaviorFuns Object containing the functions required for the functioning of the behavior
+         * @return {String | null}              Returns the name of the behavior on successful creation/registration of behavior. Otherwise null is returned.
+         */
         createBehavior: function(behaviorName, behaviorVars, behaviorFuns){
-            var behaviorClass = Jasper.Behavior._createBehavior(behaviorVars, behaviorFuns);
-            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass);
+            var behaviorClass = Jasper.Behavior._createBehavior(behaviorFuns);
+            return Jasper._behaviorManager._createBehavior(behaviorName, behaviorClass, behaviorVars);
         }
 
         /*
@@ -753,11 +936,41 @@ Jasper.Interpolator.prototype = {
 	getValue: function(){}
 };
 ;/*
-*TODO: add object id calc in Jasper.Object
-        remove objects
-
-
+*TODO:  remove objects
 */
+
+/**
+ * A Layer Object is used to hold any number of Jasper.Object objects which are the next level of heirarchy. A Layer can hold any number of Jasper.Object objects
+ * within it, that are rendered one after another during every frame in the order in which they are added to the Layer.
+ *
+ * The Layer can be set into two modes:
+ * Normal mode (World mode)
+ * HUD mode 
+ *
+ * Normal mode is set when the user does not provide a 'hud' property in the arguments to the constructor. or if it set to false,
+ * HUD mode is set when the user provides 'hud' property as true in the arguments to the constructor.
+ *
+ *
+ * @class Jasper.Layer
+ * @constructor
+ * @param {Object} args The object with the following options
+ * @param {String} args.name The name of the layer, for easy retrieval later on
+ * @param {Boolean} args.hud Whether HUD mode (true) or World mode (false)
+ * 
+ * 
+ * @example
+ *     var bgLayer = new Jaser.Scene({
+ *     name:"bg",
+ *     hud:false });
+ *
+ *     var statsLayer = new Jaser.Scene({
+ *     name:"stats",
+ *     hud:true });
+ *
+ *     gameScene.addLayers([bgLayer, statsLayer]);
+ *     
+ */
+
 
 Jasper.Layer = function(args){
     this._name=args.name;
@@ -765,10 +978,10 @@ Jasper.Layer = function(args){
     this._hud = false;
     this._camera  = undefined;
     if(args.hud !== undefined){
-        this._hud = true;
+        this._hud = args.hud;
     }
     
-    this._scene = null;
+    this._scene = undefined;
     this._layerNumber = -1;
 
     this.worldW=0;
@@ -823,18 +1036,37 @@ Jasper.Layer.prototype = {
             this.onObjectRemove(obj);
         },
 
+        /**
+         * Get the worldWidth and worldHeight of the scene, which this layer is part of.
+         * @method getWorldSize
+         * @return {[Number, Number]} An array with the width and the height of the world
+         */
         getWorldSize: function(){
             return [this.worldW, this.worldH];
         },
 
+        /**
+         * Add a new Jasper.Object to the ObjectList
+         * @method addObject
+         * @param  {Jasper.Object} jasperObject  A Jasper.Objct object that is to be added to the ObjectList. The order in which objects are added has significance.
+         * @chainable
+         */
         addObject: function(jasperObject){
             if(jasperObject instanceof Jasper.Object){
-                jasperObject._layer = this;
+                if(jasperObject.getLayer() !== undefined){
+                    jasperObject.getLayer().removeObject(jasperObject);
+                }
+
+                jasperObject._setLayer(this);
                 this.objects.push(jasperObject);
                 this.numObjects++;
 
                 this._onObjectAdd(jasperObject);
-                jasperObject._onAddedToLayer();
+                if(this.getScene() !== undefined){
+                    jasperObject._setCamera(this._camera);
+                }
+                jasperObject._clearCollisionManagerWaiting();
+                jasperObject.onAdd();
                 return this;
                 
             } 
@@ -843,7 +1075,26 @@ Jasper.Layer.prototype = {
             }
 
         },
+        /**
+         * Add a list of objects to the ObjectList in the same order as in the argument
+         * @method addObjects
+         * @param  {Array<Jasper.Object>} jasperObjects Array of Jasper.Object objects to be added to the ObjectList of the Layer.
+         * @chainable
+         */
+        addObjects: function(jasperObjects){
+            var len = jasperObjects.length;
+            for(var i=0; i<len; i++){
+                this.addObject(jasperObjects[i]);
+            }
+            return this;
+        },
 
+        /**
+         * Remove the given Jasper.Object from the ObjectList of the layer
+         * @method removeObject
+         * @param  {Jasper.Object} jasperObject [description]
+         * @return {[type]}              [description]
+         */
         removeObject: function(jasperObject){
             if(jasperObject instanceof Jasper.Object){
                 var indx = this.objects.indexOf(jasperObject);
@@ -857,29 +1108,108 @@ Jasper.Layer.prototype = {
                 throw Error("Cannot remove object, needs JasperObject" );
             }
         },
+
+        /**
+         * Get the list of Jasper.Object from the ObjectList of this scene
+         * @method getObjects
+         * @return {Array<Jasper.Object>} The ObjectList of this scene
+         */
         getObjects: function(){
             return this.objects;
         },
+
+        /**
+         * Get the scene which the layer is a part of.
+         * @method getScene
+         * @return {Jasper.Scene} The parent scene
+         */
         getScene: function(){
             return this._scene;
         },
+
+        /**
+         * Get the index of the current layer in the parent Jasper.Scene's LayerList
+         * @method getLayerNumber
+         * @return {Number} The index of the layer in the parent scene's LayerList
+         */
         getLayerNumber: function(){
             return this._layerNumber;
         },
+
+        /**
+         * Get the camera that is associated with the current layer
+         * @method getCamera
+         * @return {Jasper.Camera} The camera attached to the parent scene
+         */
         getCamera: function(){
             return this._camera;
         },
+        /**
+         * Returns if this layer is in HUD mode
+         * @method isHud
+         * @return {Boolean} The mode of the layer is HUD mode (true) or Normal mode (false)
+         */
         isHud: function(){
             return this._hud;
+        },
+        _setCamera: function(camera){
+            this._camera = camera;
+            objs = this.getObjects();
+            var l=objs.length;
+            for (var i=0; i<l;i++){
+                objs[i]._setCamera(camera);
+            }
         }
 
         
 };
-;/**
+;/*
 TODO: the core intermediary call in addobject remove
 
 */
 
+/*
+*TODO:  remove objects
+*/
+
+/**
+ *
+ * ## The main component of the engine
+ * 
+ * A Jasper.Object object is an object of logical existence. It does not do anything nor visually exists.
+ * 
+ * Behaviors are attached to objects to give them the required characteristics such as a sprite image, moving capabilities, reaction to mouse events, 
+ * collision capabilities, or any other user-defined behavior.
+ * 
+ * This Object-Behavior combinations give each object a unique representation within the game and makes the objects highly flexible.
+ * 
+ * Behaviors can b plugged in and out of the objects as and when desired. This allows for complex behavior changes from instant of time to another.
+ *
+ * Any number of behaviors can be added to the object.
+ * 
+ * But only one renderable behavior such as circle, rectangle, sprite, spritesheet, etc are active.
+ *
+ * However any number of non-rendering behaviors can be attached.
+ * 
+ * 
+ *
+ * @class Jasper.Object
+ * @constructor
+ * @param {String} objectName The name to be assigned to the object
+ * 
+ * 
+ * @example
+ *     var hero = new Jaser.Scene({
+ *     name:"bg",
+ *     hud:false });
+ *
+ *     var statsLayer = new Jaser.Scene({
+ *     name:"stats",
+ *     hud:true });
+ *
+ *     gameScene.addLayers([bgLayer, statsLayer]);
+ *     
+ */
 
 Jasper.Object = function(objectName){
 
@@ -904,14 +1234,18 @@ Jasper.Object = function(objectName){
     this._viewportY = 0;
     
     this.rotation = 0;
-    this.alpha = 0;
+    this.alpha = 1.0;
 
     this._name=objectName;
+
+    this._camera = undefined;
 
 
 //    this.core : undefined;
     this._scene = null;
-
+    this.onAdd = function(){};
+    this.onUpdate = function(){};
+    this.onDestroy =function(){};
 
 };
 
@@ -923,23 +1257,15 @@ Jasper.Object.prototype = {
             if(this._initWaiting.length>0){
                 var toInitBehav = this._initWaiting.pop();
                 while(toInitBehav !== undefined){
-                    toInitBehav.init();
+                    toInitBehav._init();
                     toInitBehav = this._initWaiting.pop();
                 }
             }
 
             for (var behavior in this._behaviors){
-                //console.log(name+" : "+behavior);
-                //try{
                 this._behaviors[behavior].update(dt);
-                //}
-                /*catch(e){
-                    console.log(behavior);
-                    for(var b in this.getExtraBehaviors())
-                    console.log(i);
-                }*/
-
             }
+            this.onUpdate(dt);
         },
 
         _render: function(ctx){
@@ -965,10 +1291,26 @@ Jasper.Object.prototype = {
                 Jasper._animationManager._unregisterObject(this);
             }
         },
-        removeAnimation: function(animName){
-            delete this._anims[animName];
-            this._checkAnimationList();
+        
+        _hasNormalBehavior: function(behaviorName){
+            inNormalBehaviors = (this._behaviors[behaviorName] !== undefined);
+            return inNormalBehaviors;
         },
+        _hasExtraBehavior: function(behaviorName){
+            inExtraBehaviors = (this._extraBehaviors[behaviorName] !== undefined);
+            return inExtraBehaviors;
+        },
+        _addInitWaiting: function(behavior){
+            this._initWaiting.push(behavior);
+        },
+
+        /**
+         * Add an animation to the animation queue
+         * @method addAnimation
+         * @param  {String} animName     The name of the animation to be added. The name must be a registered animation name in the engine.
+         * @param  {Object} attrs        The options required for the specified animation.
+         * @return {Jasper.Animation}    The Jasper.Animation instance assigned to this object
+         */
         addAnimation: function(animName, attrs){
             var anim = Jasper._animationManager._createAnimation(animName, attrs);
             this._anims[animName] = anim;
@@ -976,6 +1318,25 @@ Jasper.Object.prototype = {
             Jasper._animationManager._registerObject(this);
             return anim;
         },
+
+        /**
+         * Ends and removes the specified animation from the queue.
+         * @method removeAnimation
+         * @param  {String} animName     The name of the animation to be removed from this object
+         * @chainable
+         */
+        removeAnimation: function(animName){
+            delete this._anims[animName];
+            this._checkAnimationList();
+            return this;
+        },
+
+        /**
+         * Get the animation from the 
+         * @method [    methodName]
+         * @param  {[type]} animName     [description]
+         * @return {[type]}              [description]
+         */
         getAnimation: function(animName){
             if(this._anims[animName] !== undefined){
                 return this._anims[animName];
@@ -985,35 +1346,60 @@ Jasper.Object.prototype = {
                 return ;
             }
         },
-        _onAddedToLayer: function(){
+        _clearCollisionManagerWaiting: function(){
             Jasper._collisionManager._clearWaiting(this);
         },
 
+        /**
+         * Get the x coordinate of the object's current position in the world
+         * @method getPosX
+         * @return {Number} The x-coordinate of the object
+         */
         getPosX: function(){
             return this.posX;
         },
         setPosX: function(posx){
             this.posX=Math.floor(posx);
         },
+        /**
+         * Get the y coordinate of the object's current position in the world
+         * @method getPosY
+         * @return {Number} The y-coordinate of the object
+         */
         getPosY:function(){
             return this.posY;
         },
         setPosY: function(posy){
             this.posY=Math.floor(posy);
         },
-        setHeight: function(h){
-            this.height=h;
-        },
-        setWidth: function(w){
-            this.width=w;
-        },
+        /**
+         * Get the height of the object
+         * @method getHeight
+         * @return {Number} The height of the object
+         */
         getHeight: function(){
             return this.height;
         },
+        setHeight: function(h){
+            this.height=Math.floor(h);
+        },
+        /**
+         * Get the width of the object
+         * @method getWidth
+         * @return {Number} The width of the object
+         */
         getWidth: function(){
             return this.width;
         },
+        setWidth: function(w){
+            this.width=Math.floor(w);
+        },
         
+        /**
+         * Get the [x,y] coordinate of the camera's current position in the world
+         * @method getViewportPos
+         * @return {[Number,Number]} The [x,y] coordinates of the camera
+         */
         getViewportPos: function(){
             if(this.getLayer().isHud()){
                 return [this.getPosX(), this.getPosY()];
@@ -1021,37 +1407,84 @@ Jasper.Object.prototype = {
                 return this.getLayer().getCamera().getViewportPos(this);
             }
         },
+        /**
+         * Get the [x,y] coordinate of the objects's current position in the world
+         * @method getPos
+         * @return {[Number,Number]} The [x,y] coordinates of the object
+         */
+        getPos: function(){
+            return [this.posX, this.posY];
+        },
         setPos: function(x,y){
             this.posX=Math.floor(x); this.posY=Math.floor(y);
         },
+        /**
+         * Get the alpha of the object
+         * @method getAlpha
+         * @return {Number} The alpha of the object
+         */
         getAlpha:function(){
             return this.alpha;
         },
         setAlpha: function(val){
             this.alpha=val;
         },
+        /**
+         * Get the current rotation angle of the object
+         * @method getRotationAngle
+         * @return {Number} The rotation angle of the object
+         */
         getRotationAngle:function(){
             return this.rotation*180/Math.PI;
         },
         setRotationAngle: function(val){
             this.rotation=val*Math.PI/180;
         },
+        /**
+         * Get the rotation of the object in radians
+         * @method getRotationRadian
+         * @return {Number} The rotation of the object in radians
+         */
         getRotationRadian: function(){
             return this.rotation;
         },
-        setRotationARadian: function(val){
+        setRotationRadian: function(val){
             this.rotation=val;
         },
+        setVisible: function(isVisible){
+            this.visible=isVisible;
+        },
+        /**
+         * Whether the object is visible in the world
+         * @method isVisible
+         * @return {Boolean} The visibilty of the object
+         */
+        isVisible: function(){
+            return this.visible;
+        },
 
-
+        /**
+         * Get this object's parent layer
+         * @method getLayer
+         * @return {Jasper.Layer} This object's parent layer
+         */
         getLayer:function(){
             return this._layer;
         },
-        _addInitWaiting: function(behavior){
-            this._initWaiting.push(behavior);
+
+        _setLayer: function(jasperLayer){
+            if(jasperLayer instanceof Jasper.Layer)
+                this._layer = jasperLayer;
         },
+        
         //RETURNS: JasperBehavior Object
-        addBehavior: function (behaviorName){                   //Can add both by string // NOT SURE: or by passing custom behavior object
+        /**
+         * Create an instance of the behavior with the supplied name and add it to this object. The behavior name must be registered to the game engine.
+         * @method addBehavior
+         * @param  {String} behaviorName The name of the registered behavior to add to the object
+         * @return {Jasper.Behavior}              The instance of the behavior that has been succesfully added to the object. Otherwise null.
+         */
+        addBehavior: function (behaviorName){                  
             if(typeof (behaviorName) == "string"){
                 var behavior = Jasper._behaviorManager._addBehaviorToObject(behaviorName, this);
                 
@@ -1061,7 +1494,7 @@ Jasper.Object.prototype = {
                     behavior._parent = this;
                     this._addInitWaiting(behavior);
                     if(Jasper._behaviorManager._isNonUpdateBehavior(behaviorName)){
-                        console.log("extra behavior found:" +behaviorName);
+                        //console.log("extra behavior found:" +behaviorName);
                         this._extraBehaviors[behaviorName] = behavior;
                     }
                     else{
@@ -1069,19 +1502,33 @@ Jasper.Object.prototype = {
 
                         /////////WILL IT WORK
                         if(behavior instanceof Jasper.RenderableBehavior){
-                            console.log("renderer found");
+                            //console.log("renderer found");
                             this._rendererBehavior = behavior;
                         }
                     }
+                    
                     return behavior;
                 }
             }
         },
+
+        /**
+         * Remove the behavior ,with the given name, from this object
+         * @method removeBehavior
+         * @param  {String} behaviorName The name of the behavior to remove
+         * @chainable
+         */
         removeBehavior: function (behaviorName){
             Jasper._behaviorManager._deleteBehaviorFromObject(behaviorName,this);
             delete this._behaviors[behaviorName];
-
         },
+        
+        /**
+         * Checks whether the behavior with the given name is attached to this object
+         * @method hasBehavior
+         * @param  {String} behaviorName The name of the behavior to check
+         * @return {Boolean}              If behavior is present (true) or not (false)
+         */
         hasBehavior: function(behaviorName){
             inNormalBehaviors = this._hasNormalBehavior(behaviorName);
             inExtraBehaviors = this._hasExtraBehavior(behaviorName);
@@ -1089,14 +1536,13 @@ Jasper.Object.prototype = {
             return (inNormalBehaviors || inExtraBehaviors);
             
         },
-        _hasNormalBehavior: function(behaviorName){
-            inNormalBehaviors = (this._behaviors[behaviorName] !== undefined);
-            return inNormalBehaviors;
-        },
-        _hasExtraBehavior: function(behaviorName){
-            inExtraBehaviors = (this._extraBehaviors[behaviorName] !== undefined);
-            return inExtraBehaviors;
-        },
+        
+        /**
+         * Get the instance of the behavior with the given name that has been attached to this object.
+         * @method getBehavior
+         * @param  {String} behaviorName The name of the behavior to get from this object
+         * @return {Jasper.Behavior}              The behavior instance that is attached to the object
+         */
         getBehavior: function(behaviorName){
             if(this._hasNormalBehavior(behaviorName))
                 return this._behaviors[behaviorName];
@@ -1105,16 +1551,20 @@ Jasper.Object.prototype = {
                     return this._extraBehaviors[behaviorName];
             }
         },
-        setVisible: function(isVisible){
-            this.visible=isVisible;
-        },
-        isVisible: function(){
-            return this.visible;
-        },
+        
+        
+
+        
 
 
 
-        // Custom Renderer Behavior overwrites all older behaviors and can be used for dynamic rendering
+        /**
+         * Set the Rendering Behavior of the object. This overwrites the older rendering behavior. 
+         * Note: An object can have only one rendering behavior active at a time.
+         * @method setObjectRenderer
+         * @param  {String} rendererBehaviorName The name of the renderer behavior
+         * @return {[type]}                      [description]
+         */
         setObjectRenderer: function(rendererBehaviorName){
             if(this._behaviors[rendererBehaviorName] instanceof Jasper.RendererBehavior)
                 this._rendererBehavior = this._behaviors[rendererBehaviorName];
@@ -1129,12 +1579,39 @@ Jasper.Object.prototype = {
         },
         _getAllBehaviors: function(){
             return this._behaviors;
+        },
+
+        _setCamera: function(camera){
+            console.log("setting camera");
+            this._camera = camera;
         }
     
 };
 
 Jasper.Object.ID = 0;
-;Jasper.Scene = function(args){
+;/**
+ * A Scene Object is used to seperate the game into different components. At a time only one scene can be run by the engine. However, every Scene consists 
+ * of a set of Jasper.Layer objects that are rendered one after another during every frame in the order in which they are added to the Scene.
+ *
+ *
+ * @class Jasper.Scene
+ * @constructor
+ * @param {Object} args The object with the following options
+ * @param {String} args.name The name of the scene, for easy retrieval later on
+ * @param {Number} args.worldW The maximum width of the world in the current scene, can exceed canvas' width
+ * @param {Number} args.worldH The maximum height of the world in the current scene, can exceed canvas' height.
+ * 
+ * @example
+ *     var gameScene = new Jaser.Scene({
+ *     name:"mainscene",
+ *     worldW: 1000,
+ *     worldH: 1500});
+ *
+ *     gameCore.addScene(gameScene).startScene(gameScene);
+ *     
+ */
+
+Jasper.Scene = function(args){
 
     this.sceneName = args.name;
 
@@ -1142,8 +1619,8 @@ Jasper.Object.ID = 0;
     this.worldH = args.worldH;
 
     this._camera = new Jasper.Camera({
-        width:500,
-        height:500,
+        width: Jasper._core.canvasWidth,
+        height: Jasper._core.canvasHeight,
         worldWidth: this.worldW,
         worldHeight: this.worldH
     });
@@ -1194,15 +1671,32 @@ Jasper.Scene.prototype = {
             this.onAddLayer(layer);
         },
 
+        /**
+         * Set the scene's name
+         * @method setSceneName
+         * @param  {String} name         The name to be set as the scene's name
+         * @chainable
+         */
         setSceneName: function(name){
             this.sceneName=name;
             return this;
         },
 
+        /**
+         * Get the scene's name
+         * @method getSceneName
+         * @return {String} The name of the scene
+         */
         getSceneName: function(){
             return this.sceneName;
         },
         //                                Option to add layer number for comfort
+        /**
+         * Add a new Jasper.Layer to the LayerList
+         * @method addLayer
+         * @param  {Jasper.Layer} jasperLayer  A Jasper.Layer object that is to be added to the LayerList. The order in which layers are added has significance
+         * @chainable
+         */
         addLayer: function(jasperLayer){
             if(jasperLayer instanceof Jasper.Layer){
                 
@@ -1212,7 +1706,7 @@ Jasper.Scene.prototype = {
                 this.layerList.push(jasperLayer);
                 jasperLayer.scene = this;
                 jasperLayer._layerNumber = this.numLayers;
-                jasperLayer._camera = this._camera;
+                jasperLayer._setCamera(this._camera);
                 this.numLayers++;
 
 
@@ -1225,13 +1719,26 @@ Jasper.Scene.prototype = {
                 throw Error("Cannot add object to scene. need Jasper.Layer");
             }
         },
-        //jasperLayers is an array of jasper.layer
+        /**
+         * Add a list of layers to the LayerList in the same order as in the argument
+         * @method addLayers
+         * @param  {Array<Jasper.Layer>} jasperLayers Array of Jasper.Layer objects to be added to the LayerList of the Scene.
+         * @chainable
+         */
         addLayers: function(jasperLayers){
             var len = jasperLayers.length;
             for(var i=0; i<len; i++){
                 this.addLayer(jasperLayers[i]);
             }
+            return this;
         },
+
+        /**
+         * Get the layer that is present at the given 'index' from the LayerList. Index starts at 0
+         * @method getLayerWithIndex
+         * @param  {Number}     index       The index of the layer in the LayerList. Value of index starts from 0, ie, [0,1,2,3,...]
+         * @return {Jasper.Layer}           The Jasper.Layer object at the given index
+         */
         getLayerWithNumber: function(num){
             len = this.layerList.length;
             for(var i=0;i<len;i++){
@@ -1241,6 +1748,12 @@ Jasper.Scene.prototype = {
             }
             return null;
         },
+
+        /**
+         * Get the list of Jasper.Layer objects in the LayerList of this scene.
+         * @method getLayers
+         * @return {Array<Jasper.Layer>} The list of layers in the LayerList of the Scene
+         */
         getLayers: function(){
             return this.layerList;
         }
@@ -1331,7 +1844,8 @@ Jasper.SpriteManager.prototype = {
 		"movex": Jasper.MoveXAnimation,
 		"movey": Jasper.MoveYAnimation,
 		"alpha": Jasper.AlphaAnimation,
-		"rotate": Jasper.RotateAnimation
+		"rotate": Jasper.RotateAnimation,
+		"size": Jasper.SizeAnimation
 	};
 
 	this._interpolatorLookup = {
@@ -1809,11 +2323,10 @@ QUAD.init = function(args) {
 
 
 Jasper.CircleDrawBehavior = function(){
-    this.rad = 0;
+    this.radius = 0;
     this.strokeColor = 'black';
     this.strokeWidth = 5;
     this.fillColor = 'black';
-
 
     this.fill = true;
     this.stroke = true;
@@ -1823,16 +2336,26 @@ Jasper.CircleDrawBehavior = function(){
 Jasper.CircleDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.CircleDrawBehavior.prototype, {
-        init:function(){
-
+        _attr: function(args){
+            if(args.radius !== undefined)
+                this.setRadius(args.radius);
+            if(args.strokeColor !== undefined)
+                this.setStrokeColor(args.strokeColor);
+            if(args.strokeWidth !== undefined)
+                this.setStrokeWidth(args.strokeWidth);
+            if(args.fillColor !== undefined)
+                this.setFillColor(args.fillColor);
+            return this;
         },
+
         update: function(dt){},
 
         render:function(ctx){
             parent = this.getParentObject();
+            pos = parent.getViewportPos();
             ctx.beginPath();
 
-            ctx.arc(Math.floor(parent.getPosX()), Math.floor(parent.getPosY()), this.rad, 0, 2 * Math.PI, true);
+            ctx.arc(Math.floor(pos[0]), Math.floor(pos[1]), this.radius, 0, 2 * Math.PI, true);
             if(this.fill){
                 ctx.fillStyle = this.fillColor;
                 ctx.fill();
@@ -1848,22 +2371,51 @@ Object.extend(Jasper.CircleDrawBehavior.prototype, {
 
 
         setRadius:function(radius){
-            this.rad=radius;
+            this.radius=radius;
             return this;
         },
+        getRadius: function(){
+            return this.radius;
+        },
+
         setFillColor: function(r,g,b,a){
 
-            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
                 this.fillColor = r;
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
-                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
-                this.getParentObject().setAlpha(a);
-                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
             return this;
+        },
+        setStrokeColor: function(r,g,b,a){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
+                this.strokeColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            return this;
+        },
+        getFillColor: function(){
+            return this.fillColor;
+        },
+        getStrokeColor: function(){
+            return this.strokeColor;
+        },
+        setStrokeWidth: function(width){
+            this.strokeWidth=width;
+            return this;
+        },
+        getStrokeWidth: function(){
+            return this.getStrokeWidth;
         },
         setFillEnabled: function(boolean){
             this.fill=boolean;
@@ -1871,10 +2423,6 @@ Object.extend(Jasper.CircleDrawBehavior.prototype, {
         },
         setStrokeEnabled: function(boolean){
             this.stroke=boolean;
-            return this;
-        },
-        setStrokeWidth: function(width){
-            this.strokeWidth=width;
             return this;
         }
         
@@ -1888,10 +2436,11 @@ Jasper.CollisionBehavior.prototype = new Jasper.Behavior();
 
 Object.extend(Jasper.CollisionBehavior.prototype,{
 
-        init: function(object){
+        _init: function(object){
             Jasper._behaviorManager._addNonUpdateBehavior('collision');
             Jasper._collisionManager._registerCollidableObject(this.getParentObject());
             //Jasper._mouseManager.registerCallbackObject(object);
+            this.onInit();
         },
 
         setOnCollide: function(collideFunc){
@@ -1912,10 +2461,22 @@ Jasper.MouseBehavior.prototype = new Jasper.Behavior();
 
 
 Object.extend(Jasper.MouseBehavior.prototype,{
-
-        init: function(object){
+        _attr: function(args){
+            if(args.onClick !== undefined)
+                this.setOnClick(args.onClick);
+            if(args.onMove !== undefined)
+                this.setOnMove(args.onMove);
+            if(args.onDown !== undefined)
+                this.setOnDown(args.onDown);
+            if(args.onUp !== undefined)
+                this.setOnUp(args.onUp);
+            if(args.onDblClick !== undefined)
+                this.setOnDblClick(args.onDblClick);
+        },
+        _init: function(object){
             Jasper._behaviorManager._addNonUpdateBehavior('mouse');
             //Jasper._mouseManager.registerCallbackObject(object);
+            this.onInit();
         },
         onClick: function(){},
         onMove: function(){},
@@ -1995,18 +2556,16 @@ Jasper.PolygonDrawBehavior = function(){
 Jasper.PolygonDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.PolygonDrawBehavior.prototype, {
-        init:function(){
-
-        },
+        
         update: function(dt){},
 
         render:function(ctx){
             parent = this.getParentObject();
-
+            pos = parent.getViewportPos();
             ctx.beginPath();
-            ctx.moveTo(this._points[0][0], this._points[0][1]);
+            ctx.moveTo(pos[0], pos[1]);
             for (var i=0; i<this._numPoints; i++){
-                ctx.lineTo(this._points[this._numPoints][0], this._points[this._numPoints][1]);
+                ctx.lineTo(pos[0] + this._points[i][0], pos[1]+ this._points[i][1]);
             }
             ctx.closePath();
 
@@ -2062,15 +2621,14 @@ Object.extend(Jasper.PolygonDrawBehavior.prototype, {
         },
         setFillColor: function(r,g,b,a){
 
-            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
                 this.fillColor = r;
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
-                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
-                this.getParentObject().setAlpha(a);
-                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
             return this;
         },
@@ -2115,8 +2673,6 @@ Object.extend(Jasper.RandomMoveBehavior.prototype , {
 
 
 Jasper.RectangleDrawBehavior = function(){
-    this.width = 0;
-    this.height = 0;
     this.strokeColor = 'black';
     this.strokeWidth = 5;
     this.fillColor = 'black';
@@ -2129,48 +2685,76 @@ Jasper.RectangleDrawBehavior = function(){
 Jasper.RectangleDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.RectangleDrawBehavior.prototype, {
-        init:function(){
-
+        _attr: function(args){
+            if(args.width !== undefined)
+                this.setWidth(args.width);
+            if(args.height !== undefined)
+                this.setHeight(args.height);
+            if(args.strokeColor !== undefined)
+                this.setStrokeColor(args.strokeColor);
+            if(args.strokeWidth !== undefined)
+                this.setStrokeWidth(args.strokeWidth);
+            if(args.fillColor !== undefined)
+                this.setFillColor(args.fillColor);
         },
+       
         update: function(dt){},
 
         render:function(ctx){
             parent = this.getParentObject();
+            pos = parent.getViewportPos();
 
             if(this.fill){
                 ctx.fillStyle = this.fillColor;
-                ctx.fillRect(parent.posX, parent.posY, this.width, this.height);
+                ctx.fillRect(pos[0], pos[1], parent.getWidth(), parent.getHeight());
             }
             if(this.stroke){
                 ctx.lineWidth = this.strokeWidth;
                 ctx.strokeStyle = this.strokeColor;
-                ctx.strokeRect(parent.posX, parent.posY, this.width, this.height);
+                ctx.strokeRect(pos[0], pos[1], parent.getWidth(), parent.getHeight());
             }
 
 
         },
 
-        setWidth: function(width){
-            this.width=width;
-            return this;
-        },
-        setHeight: function(height){
-            this.height=height;
-            return this;
-        },
         setFillColor: function(r,g,b,a){
 
-            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
                 this.fillColor = r;
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
-                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
-                this.getParentObject().setAlpha(a);
-                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
             return this;
+        },
+        setStrokeColor: function(r,g,b,a){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
+                this.strokeColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            return this;
+        },
+        getFillColor: function(){
+            return this.fillColor;
+        },
+        getStrokeColor: function(){
+            return this.strokeColor;
+        },
+        setStrokeWidth: function(width){
+            this.strokeWidth=width;
+            return this;
+        },
+        getStrokeWidth: function(){
+            return this.getStrokeWidth;
         },
         setFillEnabled: function(boolean){
             this.fill=boolean;
@@ -2178,10 +2762,6 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
         },
         setStrokeEnabled: function(boolean){
             this.stroke=boolean;
-            return this;
-        },
-        setStrokeWidth: function(width){
-            this.strokeWidth=width;
             return this;
         }
         
@@ -2194,16 +2774,14 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
 
 Jasper.SpriteBehavior = function(){
 
+    this.path = '';
+
     this._nativeWidth = 0;
     this._nativeHeight = 0;
     this._scaleX = 1;
     this._scaleY = 1; 
     this._sprite = null;
-    this._path = '';
     this._loaded = false;
-
-    this._sprite=null;
-
     this._toAdjust = false;
 
 
@@ -2212,9 +2790,17 @@ Jasper.SpriteBehavior = function(){
 Jasper.SpriteBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.SpriteBehavior.prototype, {
-        init:function(){
-            
+        _attr: function(args){
+            console.log("_attr");
+            if(args.width !== undefined)
+                this.setWidth(args.width);
+            if(args.height !== undefined)
+                this.setHeight(args.height);
+            if(args.path !== undefined)
+                this.setSprite(args.path);
+            return this;
         },
+
         update: function(dt){},
 
         render:function(ctx){
@@ -2226,25 +2812,26 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         },      
 
         setSprite: function(path){
-            if(this._path != path){
-                this._path = path;
-                Jasper._spriteManager.setSprite(this, this._path);
+            
+            if(this.path != path){
+                this.path = path;
+                Jasper._spriteManager.setSprite(this, this.path);
             }
             return this;
         },
         setHeight: function(height){
-            this.getParentObject().height=Math.floor(height);
+            this.getParentObject().setHeight(height);
             return this;
         },
         setWidth: function(width){
-            this.getParentObject().width=Math.floor(width);
+            this.getParentObject().setWidth(width);
             return this;
         },
         getHeight: function(){
-            return this.getParentObject().height;
+            return this.getParentObject().getHeight();
         },
         getWidth: function(){
-            return this.getParentObject().width;
+            return this.getParentObject().getWidth();
         },
         getNativeHeight: function(){
             return this._nativeHeight;
@@ -2409,10 +2996,8 @@ Jasper.SpriteSheetBehavior = function(){
 Jasper.SpriteSheetBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.SpriteSheetBehavior.prototype, {
-        init:function(){
-            
-        },
-        attr: function(args){
+       
+        _attr: function(args){
             if(args.spritesheet === undefined || args.actions === undefined ||
             args.frameWidth === undefined || args.frameHeight === undefined){
 
@@ -2423,6 +3008,7 @@ Object.extend(Jasper.SpriteSheetBehavior.prototype, {
 
             for(var action in args.actions){
                 var actObj = {};
+                actObj.name = action;
                 if(args.actions[action].loop !== undefined)
                     actObj.loop = args.actions[action].loop ;
                 else
@@ -2500,6 +3086,7 @@ Object.extend(Jasper.SpriteSheetBehavior.prototype, {
             this._currentAction = frame;
         },
         runAction: function(action){
+           
             this._currentAction = this.actions[action]._reset();
         },
         pause: function(){
@@ -2563,6 +3150,122 @@ Object.extend(Jasper.SpriteSheetBehavior.prototype, {
             }
         }
      
+});;/*
+    ERROR: init missing from object. workaround temp init function. Need to find out how to extend.
+
+*/
+
+
+
+Jasper.TextDrawBehavior = function(){
+    this.text = "";
+    
+    this.color = 'black';
+
+    this.font = "Lucida Console";
+    this.size = "18px";
+    this.maxWidth = "";
+
+    this._changed = true;
+
+    
+
+};
+
+Jasper.TextDrawBehavior.prototype = new Jasper.RenderableBehavior();
+
+Object.extend(Jasper.TextDrawBehavior.prototype, {
+        _attr: function(args){
+             if(args.text !== undefined)
+                this.setText(args.text);
+            if(args.color !== undefined)
+                this.setFontColor(args.color);
+            if(args.size !== undefined)
+                this.setFontSize(args.size);
+            if(args.maxWidth !== undefined)
+                this.setMaxWidth(args.maxWidth);
+            return this;
+        },
+       
+        update: function(dt){},
+
+        render:function(ctx){
+            parent = this.getParentObject();
+            pos = parent.getViewportPos();
+            
+            ctx.fillStyle = this.color;
+            ctx.font = this.size + " " +this.font;
+            ctx.textBaseline = 'top';
+            ctx.fillText(this.text, pos[0], pos[1]);
+
+            var metrics = ctx.measureText(this.text);
+            if(this._changed === true){
+                parent.setWidth(metrics.width);
+                parent.setHeight(parseInt(this.size, 10));
+                this._changed = false;
+            }
+
+        },
+
+
+        // point is an array having [x,y]
+        setText: function(text){
+            this.text = text;
+            this._changed = true;
+            return this;
+        },
+        getText: function(){
+            return this.text;
+        },
+        setFont: function(fontname){
+            this.font = fontname;
+            this._changed = true;
+            return this;
+        },
+        getFont: function(){
+            return this.font;
+        },
+        setFontSize: function(size){
+            if(typeof(size) === "number"){
+                this.size = size+"px";
+            }
+            else{
+                this.size = size;
+            }
+            this._changed = true;
+            return this;
+        },
+        getFontSize: function(){
+            return this.size;
+        },
+        setMaxWidth: function(maxWidth){
+            if(typeof(size) === "number"){
+                this.maxWidth = maxWidth+"px";
+            }
+            else{
+                this.maxWidth = maxWidth;
+            }
+            this._changed = true;
+            return this;
+        },
+        getMaxWidth: function(){
+            return this.maxWidth;
+        },
+        setFontColor: function(r,g,b){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined ){
+                this.fontColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fontColor="rgb("+r+","+g+","+b+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined ){
+                this.fontColor="rgb("+r+","+g+","+b+")";
+            }
+            return this;
+        }
+
+        
 });;Jasper.AlphaAnimation = function(){
 	this._name = "alpha";
 	this.fromAlpha = null;
@@ -2580,6 +3283,13 @@ Object.extend(Jasper.AlphaAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setAlpha(
+						this._interpolator.getValue(this.fromAlpha, this.toAlpha, this._elapsedTime, this.duration));
+					this._onFrame(dt);
+					return;	
+				}
 				this.getParentObject().setAlpha(this.toAlpha);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -2590,14 +3300,22 @@ Object.extend(Jasper.AlphaAnimation.prototype, {
 			this._onFrame(dt);
 			}
 		}
-	},
+	}
 
 
 
 
 
 
-});;Jasper.LinearInterpolator = function(){
+});;Jasper.Interpolator = function(){
+	
+};
+
+
+Jasper.Interpolator.prototype = {
+	getValue: function(){}
+};
+;Jasper.LinearInterpolator = function(){
 	
 };
 
@@ -2631,6 +3349,14 @@ Object.extend(Jasper.MoveAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setPos(
+						this._interpolator.getValue(this.fromX, this.toX, this._elapsedTime, this.duration),
+						this._interpolator.getValue(this.fromY, this.toY, this._elapsedTime, this.duration));
+					this._onFrame(dt);
+					return;	
+				}
 				this.getParentObject().setPos(this.toX, this.toY);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -2667,6 +3393,14 @@ Object.extend(Jasper.MoveXAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setPosX(
+						this._interpolator.getValue(this.fromX, this.toX, this._elapsedTime, this.duration)
+						);
+					this._onFrame(dt);	
+					return;	
+				}
 				this.getParentObject().setPosX(this.toX);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -2703,6 +3437,15 @@ Object.extend(Jasper.MoveYAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this.getParentObject().setPosY(
+						this._interpolator.getValue(this.fromY, this.toY, this._elapsedTime, this.duration)
+					);
+					this._onFrame(dt);	
+					return;	
+				}
 				this.getParentObject().setPosY(this.toY);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -2740,6 +3483,12 @@ Object.extend(Jasper.RotateAnimation.prototype, {
 		if(this._started && !this._paused){
 			this._elapsedTime+=dt;
 			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this._setRotation();
+					this._onFrame(dt);	
+					return;	
+				}
 				this._setRotation(true);
 				this._onFrame(dt);
 				this._onEnd(dt);
@@ -2764,13 +3513,73 @@ Object.extend(Jasper.RotateAnimation.prototype, {
 		}
 		else{
 			if(final)
-				this.getParentObject().setRotation(this.toRadian);
+				this.getParentObject().setRotationRadian(this.toRadian);
 			else
-				this.getParentObject().setRotation(
+				this.getParentObject().setRotationRadian(
 					this._interpolator.getValue(
 						this.fromRadian, this.toRadian, this._elapsedTime, this.duration
 						)
 					);
+		}
+	}
+
+
+
+
+
+
+});;Jasper.SizeAnimation = function(){
+	this._name = "size";
+	this.fromWidth = null;
+	this.toWidth = null;
+	this.fromHeight = null;
+	this.toHeight = null;
+};
+
+
+
+Jasper.SizeAnimation.prototype = new Jasper.Animation();
+
+
+Object.extend(Jasper.SizeAnimation.prototype, {
+
+	_update: function(dt){
+		if(this._started && !this._paused){
+			this._elapsedTime+=dt;
+			if(this._elapsedTime >=this.duration){
+				if(this.loop === true){
+					this._elapsedTime%=this.duration;
+					this._setSize();
+					this._onFrame(dt);	
+					return;	
+				}
+				this._setSize(true);
+				this._onFrame(dt);
+				this._onEnd(dt);
+			}
+			else{
+				this._setSize();
+				this._onFrame(dt);
+			}
+		}
+	},
+
+	_setSize: function(final){
+		if(final){
+			this.getParentObject().setWidth(this.toWidth);
+			this.getParentObject().setHeight(this.toHeight);	
+		}
+		else{
+			this.getParentObject().setWidth(
+				this._interpolator.getValue(
+					this.fromWidth, this.toWidth, this._elapsedTime, this.duration
+					)
+				);
+			this.getParentObject().setHeight(
+				this._interpolator.getValue(
+					this.fromHeight, this.toHeight, this._elapsedTime, this.duration
+					)
+				);
 		}
 	}
 

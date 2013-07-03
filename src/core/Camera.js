@@ -40,6 +40,9 @@ Jasper.Camera.prototype = {
 	getCameraY: function(){
 		return this.posY;
 	},
+	getCameraPos: function(){
+		return [this.posX, this.posY];
+	},
 
 
 	followObject: function(obj, offsetX, offsetY){
@@ -47,7 +50,7 @@ Jasper.Camera.prototype = {
 	},
 
 	getViewportPos: function(obj){
-		return [obj.getPosX()-this.getCameraX(), obj.getPosY()-this.getCameraY()];
+		return [obj.getPosX()-this.posX, obj.getPosY()-this.posY];
 	}
 
 

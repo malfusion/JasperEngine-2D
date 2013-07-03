@@ -6,8 +6,6 @@
 
 
 Jasper.RectangleDrawBehavior = function(){
-    this.width = 0;
-    this.height = 0;
     this.strokeColor = 'black';
     this.strokeWidth = 5;
     this.fillColor = 'black';
@@ -20,48 +18,76 @@ Jasper.RectangleDrawBehavior = function(){
 Jasper.RectangleDrawBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.RectangleDrawBehavior.prototype, {
-        init:function(){
-
+        _attr: function(args){
+            if(args.width !== undefined)
+                this.setWidth(args.width);
+            if(args.height !== undefined)
+                this.setHeight(args.height);
+            if(args.strokeColor !== undefined)
+                this.setStrokeColor(args.strokeColor);
+            if(args.strokeWidth !== undefined)
+                this.setStrokeWidth(args.strokeWidth);
+            if(args.fillColor !== undefined)
+                this.setFillColor(args.fillColor);
         },
+       
         update: function(dt){},
 
         render:function(ctx){
             parent = this.getParentObject();
+            pos = parent.getViewportPos();
 
             if(this.fill){
                 ctx.fillStyle = this.fillColor;
-                ctx.fillRect(parent.posX, parent.posY, this.width, this.height);
+                ctx.fillRect(pos[0], pos[1], parent.getWidth(), parent.getHeight());
             }
             if(this.stroke){
                 ctx.lineWidth = this.strokeWidth;
                 ctx.strokeStyle = this.strokeColor;
-                ctx.strokeRect(parent.posX, parent.posY, this.width, this.height);
+                ctx.strokeRect(pos[0], pos[1], parent.getWidth(), parent.getHeight());
             }
 
 
         },
 
-        setWidth: function(width){
-            this.width=width;
-            return this;
-        },
-        setHeight: function(height){
-            this.height=height;
-            return this;
-        },
         setFillColor: function(r,g,b,a){
 
-            if(typeof(r) == 'string' && g === undefined && b === undefined && a === undefined){
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
                 this.fillColor = r;
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a === undefined){
-                this.fillColor="rgba("+r+","+g+","+b+","+this.getParentObject().getAlpha()+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
-            else if(typeof(r) !== undefined && g !== undefined && b !== undefined && a !== undefined){
-                this.getParentObject().setAlpha(a);
-                this.fillColor="rgba("+r+","+g+","+b+","+a+")";
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.fillColor="rgb("+r+","+g+","+b+")";
             }
             return this;
+        },
+        setStrokeColor: function(r,g,b,a){
+
+            if(typeof(r) == 'string' && g === undefined && b === undefined){
+                this.strokeColor = r;
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            else if(typeof(r) !== undefined && g !== undefined && b !== undefined){
+                this.strokeColor="rgb("+r+","+g+","+b+")";
+            }
+            return this;
+        },
+        getFillColor: function(){
+            return this.fillColor;
+        },
+        getStrokeColor: function(){
+            return this.strokeColor;
+        },
+        setStrokeWidth: function(width){
+            this.strokeWidth=width;
+            return this;
+        },
+        getStrokeWidth: function(){
+            return this.getStrokeWidth;
         },
         setFillEnabled: function(boolean){
             this.fill=boolean;
@@ -69,10 +95,6 @@ Object.extend(Jasper.RectangleDrawBehavior.prototype, {
         },
         setStrokeEnabled: function(boolean){
             this.stroke=boolean;
-            return this;
-        },
-        setStrokeWidth: function(width){
-            this.strokeWidth=width;
             return this;
         }
         

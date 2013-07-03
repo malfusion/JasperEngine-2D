@@ -7,16 +7,14 @@
 
 Jasper.SpriteBehavior = function(){
 
+    this.path = '';
+
     this._nativeWidth = 0;
     this._nativeHeight = 0;
     this._scaleX = 1;
     this._scaleY = 1; 
     this._sprite = null;
-    this._path = '';
     this._loaded = false;
-
-    this._sprite=null;
-
     this._toAdjust = false;
 
 
@@ -25,9 +23,17 @@ Jasper.SpriteBehavior = function(){
 Jasper.SpriteBehavior.prototype = new Jasper.RenderableBehavior();
 
 Object.extend(Jasper.SpriteBehavior.prototype, {
-        init:function(){
-            
+        _attr: function(args){
+            console.log("_attr");
+            if(args.width !== undefined)
+                this.setWidth(args.width);
+            if(args.height !== undefined)
+                this.setHeight(args.height);
+            if(args.path !== undefined)
+                this.setSprite(args.path);
+            return this;
         },
+
         update: function(dt){},
 
         render:function(ctx){
@@ -39,25 +45,26 @@ Object.extend(Jasper.SpriteBehavior.prototype, {
         },      
 
         setSprite: function(path){
-            if(this._path != path){
-                this._path = path;
-                Jasper._spriteManager.setSprite(this, this._path);
+            
+            if(this.path != path){
+                this.path = path;
+                Jasper._spriteManager.setSprite(this, this.path);
             }
             return this;
         },
         setHeight: function(height){
-            this.getParentObject().height=Math.floor(height);
+            this.getParentObject().setHeight(height);
             return this;
         },
         setWidth: function(width){
-            this.getParentObject().width=Math.floor(width);
+            this.getParentObject().setWidth(width);
             return this;
         },
         getHeight: function(){
-            return this.getParentObject().height;
+            return this.getParentObject().getHeight();
         },
         getWidth: function(){
-            return this.getParentObject().width;
+            return this.getParentObject().getWidth();
         },
         getNativeHeight: function(){
             return this._nativeHeight;

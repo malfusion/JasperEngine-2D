@@ -7,10 +7,22 @@ Jasper.MouseBehavior.prototype = new Jasper.Behavior();
 
 
 Object.extend(Jasper.MouseBehavior.prototype,{
-
-        init: function(object){
+        _attr: function(args){
+            if(args.onClick !== undefined)
+                this.setOnClick(args.onClick);
+            if(args.onMove !== undefined)
+                this.setOnMove(args.onMove);
+            if(args.onDown !== undefined)
+                this.setOnDown(args.onDown);
+            if(args.onUp !== undefined)
+                this.setOnUp(args.onUp);
+            if(args.onDblClick !== undefined)
+                this.setOnDblClick(args.onDblClick);
+        },
+        _init: function(object){
             Jasper._behaviorManager._addNonUpdateBehavior('mouse');
             //Jasper._mouseManager.registerCallbackObject(object);
+            this.onInit();
         },
         onClick: function(){},
         onMove: function(){},

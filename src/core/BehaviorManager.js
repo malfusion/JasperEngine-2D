@@ -12,14 +12,18 @@ Jasper.BehaviorManager = function () {
         //'move': MoveBehavior,
         'circle': Jasper.CircleDrawBehavior,
         'rect': Jasper.RectangleDrawBehavior,
+        'polygon': Jasper.PolygonDrawBehavior,
         'testmove': Jasper.RandomMoveBehavior,
         'mouse': Jasper.MouseBehavior,
         'sprite': Jasper.SpriteBehavior,
         'spritesheet': Jasper.SpriteSheetBehavior,
-        'collision': Jasper.CollisionBehavior
+        'collision': Jasper.CollisionBehavior,
+        'text': Jasper.TextDrawBehavior
     };
 
     this._nonUpdateBehaviors = ['mouse', 'collision'];
+
+    this._beh_attrs = {};
 
 };
 
@@ -29,19 +33,22 @@ Jasper.BehaviorManager.prototype = {
     _addBehaviorToObject: function (behaviorName, object) {
         if (typeof (behaviorName) == "string") {
             if (hasOwnProperty(this._name_beh, behaviorName)) {
-
+                
                 var behavior = new this._name_beh[behaviorName]();
+                if(this._beh_attrs[behaviorName] !== undefined){
+                    Object.extend(behavior,this._beh_attrs[behaviorName]);
+                }
 
                 if (this._beh_BehObjPairs[behaviorName] === undefined) {
                     this._beh_BehObjPairs[behaviorName] = [];
                 }
                 this._beh_BehObjPairs[behaviorName].push([behavior, object]);
 
-                console.log("returning behavior", behavior);
+                //console.log("returning behavior", behavior);
 
-                if (typeof (behavior.init) == "undefined") {
-                    behavior.prototype.init = function (object) {};
-                }
+                //if (typeof (behavior.init) == "undefined") {
+                //    behavior.prototype.init = function (object) {};
+                //}
                 //behavior.init(object); //TODO: Add behavior init functionality for each behavior
                 return behavior;
             } else {
@@ -54,7 +61,7 @@ Jasper.BehaviorManager.prototype = {
 
     },
 
-    _createBehavior: function (behaviorName, behaviorClass) {
+    _createBehavior: function (behaviorName, behaviorClass, behaviorAttrs) {
         if (typeof (behaviorName) == "string") {
             if (hasOwnProperty(this._name_beh, behaviorName)) {
                 console.log("Behavior name already present : " + behaviorName);
@@ -62,6 +69,9 @@ Jasper.BehaviorManager.prototype = {
             } else {
                 //contents.class = "JasperBehavior";
                 this._name_beh[behaviorName] = behaviorClass;
+                if(behaviorAttrs !== undefined){
+                    this._beh_attrs[behaviorName] = behaviorAttrs;
+                }
 
                 return behaviorName;
             }

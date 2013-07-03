@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    canvas {
+        border: red solid thin;
+    }
+    </style>
+    <title></title>
+</head>
+<body>
+<div id="container"></div>
+<script src="../dist/JasperEngine.js"></script>
+
+
+<script>
+
+
+//Boilerplate code
+    var gameCore = new Jasper.Core({
+        canvasHeight: 700,
+        canvasWidth: 1000,
+        container: "container"
+    }).init();
+
+    var gameScene = new Jasper.Scene({
+        name: "main",
+        worldW: 2400,
+        worldH: 1800,
+    });
+
+    gameCore.addScene(gameScene)
+    .startScene(gameScene);
+
+    var layer0 = new Jasper.Layer({name:"bg"});
+    gameScene.addLayer(layer0);
+
+    var map = new Jasper.Object("map");
+    map.addBehavior("sprite").setSprite("./img/map.jpg").setHeight(1800).setWidth(2400);
+    map.addBehavior("mouse").attr({
+        onMove: function(x,y){
+            camX = x/gameCore.canvasWidth * gameScene.worldW  * 1.0;
+            camY = y/gameCore.canvasHeight * gameScene.worldH  * 1.0;
+            this.getParentObject().getLayer().getCamera().setCameraX(camX);
+            this.getParentObject().getLayer().getCamera().setCameraY(camY);
+        }
+    });
+    layer0.addObject(map);
+
+    var layer1 = new Jasper.Layer({name:"hovering", hud:true});
+    gameScene.addLayer(layer1);
+
+
+
+// preload
+
+    function getRandomDirection(){
+        arr = ['up', 'down', 'left', 'right'];
+        return arr[Math.floor((Math.random()*4)%4)];
+    }
+
+    man1 = {
+        spritesheet : "./img/man1.png",
+        actions: {
+            down: {
+                from:0,
+                to:3,
+                duration: 500,
+                loop: true
+            },
+            left: {
+                from:4,
+                to:7,
+                duration: 500,
+                loop: true
+            },
+            right: {
+                from:8,
+                to:11,
+                duration: 500,
+                loop: true
+            },
+            up: {
+                from: 12,
+                to:15,
+                duration: 500,
+                loop: true
+            }
+        },
+        frameWidth: 32,
+        frameHeight: 48,
+        width:32,
+        height:48
+
+    };
+    man2 = {
+        spritesheet : "./img/man2.png",
+        actions: {
+            down: {
+                from:0,
+                to:3,
+                duration: 500,
+                loop: true
+            },
+            left: {
+                from:4,
+                to:7,
+                duration: 500,
+                loop: true
+            },
+            right: {
+                from:8,
+                to:11,
+                duration: 500,
+                loop: true
+            },
+            up: {
+                from: 12,
+                to:15,
+                duration: 500,
+                loop: true
+            }
+        },
+        frameWidth: 32,
+        frameHeight: 48,
+        width:32,
+        height:48
+
+    };
+    man3 = {
+        spritesheet : "./img/man3.png",
+        actions: {
+            down: {
+                from:0,
+                to:3,
+                duration: 500,
+                loop: true
+            },
+            left: {
+                from:4,
+                to:7,
+                duration: 500,
+                loop: true
+            },
+            right: {
+                from:8,
+                to:11,
+                duration: 500,
+                loop: true
+            },
+            up: {
+                from: 12,
+                to:15,
+                duration: 500,
+                loop: true
+            }
+        },
+        frameWidth: 32,
+        frameHeight: 50,
+        width:32,
+        height:48
+
+    };
+    man4 = {
+        spritesheet : "./img/man4.png",
+        actions: {
+            down: {
+                from:0,
+                to:3,
+                duration: 500,
+                loop: true
+            },
+            left: {
+                from:4,
+                to:7,
+                duration: 500,
+                loop: true
+            },
+            right: {
+                from:8,
+                to:11,
+                duration: 500,
+                loop: true
+            },
+            up: {
+                from: 12,
+                to:15,
+                duration: 500,
+                loop: true
+            }
+        },
+        frameWidth: 29,
+        frameHeight: 74,
+        width:32,
+        height:48
+
+    };
+
+    men = [man1,man2,man3,man4];
+
+    gameCore.createBehavior("talk", {person: undefined, bubble: undefined, ball: undefined},{
+        onInit: function(){
+            parent = this.getParentObject();
+            console.log("BUBe");
+            this.bubble = new Jasper.Object("bubble");
+            this.bubble.addBehavior("sprite").setSprite("./img/bubble.png").setPos(parent.getPosX()+20, parent.getPosY()-20).setWidth(32).setHeight(32);
+            layer0.addObject(this.bubble);
+            
+            /*this.bubble = new Jasper.Object("bubble");
+            this.bubble.addBehavior("rect").setFillColor("red");
+            this.bubble.setAlpha(0.1);
+            layer0.addObject(this.bubble);
+            this.ball = new Jasper.Object("ball");
+            this.ball.addBehavior("circle").setFillColor("blue");
+            this.ball.setAlpha(0.1);
+            layer0.addObject(this.ball);*/
+        },
+        onUpdate: function(){
+            beh = this.bubble.getBehavior("sprite");
+            parent = this.getParentObject();
+            this.bubble.setPos(parent.getPosX()+20, parent.getPosY()-30);
+            //beh.setWidth(parent.getWidth());
+            //beh.setHeight(parent.getHeight());
+            /*beh = this.ball.getBehavior("circle");
+            this.ball.setPos(parent.getPosX()+parent.getWidth()/2, parent.getPosY()+parent.getHeight()/2);
+            beh.setRadius(parent.getWidth()/2);*/
+            
+            
+        }
+    });
+    gameCore.createBehavior("moveAround",{ dir: getRandomDirection(), turn:true, oldpos :undefined},{
+        onInit: function(){
+            this.oldpos = this.getParentObject().getPos();
+            this.getParentObject().addBehavior("collision").setOnCollide(function(other){
+                this.getParentObject().getBehavior("moveAround").turn = true;
+                old = this.getParentObject().getBehavior("moveAround").oldpos
+                this.getParentObject().setPos(old[0],old[1]);
+            });
+        },
+        onUpdate: function(){
+            parent = this.getParentObject();
+            y=0;x=0;
+
+            if(this.turn){
+                //console.log(this);
+                this.dir = getRandomDirection();
+                parent.getBehavior("spritesheet").runAction(this.dir);
+            
+                this.turn = false;
+            }
+
+            if(this.dir == "up"){
+                y-=1;
+            }
+            else if(this.dir == "down"){
+                y+=1;
+            }
+            else if(this.dir == "left"){
+                x-=1;
+            }
+            else if(this.dir == "right"){
+                x+=1;
+            }
+            if(parent.getPosX()+x > 0 && parent.getPosX()+parent.getWidth()+x< parent.getLayer().getWorldSize()[0] 
+                && parent.getPosY()+y > 0 && parent.getPosY()+parent.getHeight()+y< parent.getLayer().getWorldSize()[1]){
+                this.oldpos = parent.getPos();
+                parent.setPos(parent.getPosX()+x, parent.getPosY()+y)
+            }
+            else{
+                this.turn = true;
+            }
+
+        },
+        setRandomDir: function(){
+            this.turn = true;
+        }
+    });
+    
+    var ppl= [];
+
+
+    for(var i=0; i<20; i++){
+        for(var j=0;j<20;j++){
+            var person = new Jasper.Object("person");
+            person.addBehavior("spritesheet").attr(men[Math.floor((Math.random()*4)%4)]).runAction("down");
+            
+            //person.addBehavior("text").setText("Me").setFontSize("50px").setFont("Comic Sans MS");
+            //console.log(person.getBehavior("text").getFontSize());
+            person.addBehavior("moveAround").setRandomDir();
+            person.addBehavior("talk");
+            person.setPos(i*100+1, j*100+1);
+            layer0.addObject(person);
+            
+            ppl.push(person);
+            /*person.addAnimation("rotate",{
+                fromAngle: 0,
+                toAngle: 359,
+                duration: 500,
+                loop: true
+                
+
+            }).start();*/
+            person.addAnimation("alpha",{
+                fromAlpha: 0,
+                toAlpha: 1,
+                loop:true,
+                duration: 1000
+            }).start();
+            /*
+            person.addAnimation("size",{
+                fromWidth: 10,
+                toWidth: 40,
+                fromHeight: 40,
+                toHeight: 80,
+                loop:true,
+                duration: 2000
+            }).start();*/
+        }
+    }
+
+
+
+
+   
+
+
+
+</script>
+
+
+
+
+</body>
+</html>
