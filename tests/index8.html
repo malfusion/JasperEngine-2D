@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <style>
+    canvas {
+        border: red solid thin;
+    }
+    </style>
     <title></title>
 </head>
 <body>
@@ -11,8 +16,8 @@
 <script>
     var gameCore = new Jasper.Core();
     gameCore.init({
-        width: 1000,
-        height: 1000
+        width: 500,
+        height: 500
     });
 
     var mainScene = new Jasper.Scene('main');
@@ -21,6 +26,7 @@
 
     setTimeout(function(){
         var layer0 = new Jasper.Layer();
+        layer0.init({worldX:500, worldY:500});
         mainScene.addLayer(layer0);
 
 
@@ -52,22 +58,35 @@
 
         });
 
+        var ouch = gameCore.createBehavior("ouch",{}, { update: function(dt){ 
+            this.getParentObject().getBehavior("sprite").setSprite("../assets/evil.png"); 
+        }
+    }
+            );
+
         //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
         for(i=0;i<10;i++){
-            for(j=0;j<100;j++){
+            for(j=0;j<10;j++){
             var stranger = new Jasper.Object("stranger");
-            stranger.setPos(i*5,j*5);
-            stranger.addBehavior("circle").setFillColor('red').setRadius(5).setStrokeWidth(0);
+            stranger.setPos(i*50,j*50);
+            stranger.addBehavior("sprite").setSprite("../assets/evil.png").setScaleX(0.2).setScaleY(0.2);
+            //stranger.addBehavior("rect").setFillColor('red').setWidth(10).setHeight(20).setStrokeWidth(1);
             stranger.addBehavior("attract");
+            stranger.addBehavior("ouch");
+            stranger.addBehavior("collision").setOnCollide(function(obj){
+                //console.log("Colliding");
+                this.getParentObject().getBehavior("sprite").setSprite("../assets/angry.png");
+            });
             layer0.addObject(stranger);
             strangers.push(stranger);
             }
         }
 
         for(var i=0; i<strangers.length; i++){
-            var strangeMouse = strangers[i].addBehavior("mouse");
-            strangeMouse.onClick = function(){
+            var strangeMouse = strangers[i].addBehavior("mouse").setOnDown(function(){
+            
                 stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
                 if(stranger.hasBehavior("attract")){
                     stranger.removeBehavior("attract");
                     stranger.addBehavior("repel");
@@ -76,7 +95,18 @@
                     stranger.removeBehavior("repel");
                     stranger.addBehavior("attract");
                 }
-            };
+            }).setOnUp(function(){
+                stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            });
         }
     },1000);
 

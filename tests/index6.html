@@ -54,10 +54,11 @@
 
         //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
         for(i=0;i<10;i++){
-            for(j=0;j<100;j++){
+            for(j=0;j<10;j++){
             var stranger = new Jasper.Object("stranger");
             stranger.setPos(i*5,j*5);
-            stranger.addBehavior("circle").setFillColor('red').setRadius(5).setStrokeWidth(0);
+            stranger.addBehavior("sprite").setSprite("../assets/evil.png").setScaleX(0.2).setScaleY(0.2);
+            //stranger.addBehavior("rect").setFillColor('red').setWidth(10).setHeight(20).setStrokeWidth(1);
             stranger.addBehavior("attract");
             layer0.addObject(stranger);
             strangers.push(stranger);
@@ -65,9 +66,10 @@
         }
 
         for(var i=0; i<strangers.length; i++){
-            var strangeMouse = strangers[i].addBehavior("mouse");
-            strangeMouse.onClick = function(){
+            var strangeMouse = strangers[i].addBehavior("mouse").setOnDown(function(){
+            
                 stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
                 if(stranger.hasBehavior("attract")){
                     stranger.removeBehavior("attract");
                     stranger.addBehavior("repel");
@@ -76,7 +78,18 @@
                     stranger.removeBehavior("repel");
                     stranger.addBehavior("attract");
                 }
-            };
+            }).setOnUp(function(){
+                stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            });
         }
     },1000);
 

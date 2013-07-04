@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    canvas {
+        border: red solid thin;
+    }
+    </style>
+    <title></title>
+</head>
+<body>
+<div id="container"></div>
+<script src="../dist/JasperEngine.js"></script>
+
+
+<script>
+
+
+
+    var gameCore = new Jasper.Core({
+        canvasHeight: 500,
+        canvasWidth: 500,
+        container: "container"
+    }).init();
+
+    var gameScene = new Jasper.Scene({
+        name: "main",
+        worldW: 1200,
+        worldH: 600,
+    });
+
+    gameCore.addScene(gameScene)
+    .startScene(gameScene);
+
+    var layer0 = new Jasper.Layer({name:"bg"});
+    gameScene.addLayer(layer0);
+
+    var map = new Jasper.Object("map");
+    map.addBehavior("sprite").setSprite("../assets/map.png").setHeight(600).setWidth(1200);
+    map.addBehavior("mouse").setOnMove(function(x,y){
+        camX = x/gameCore.canvasWidth * gameScene.worldW  * 1.0;
+        camY = y/gameCore.canvasHeight * gameScene.worldH  * 1.0;
+        this.getParentObject().getLayer().getCamera().setCameraX(camX);
+        this.getParentObject().getLayer().getCamera().setCameraY(camY);
+    });
+    layer0.addObject(map);
+
+    var layer1 = new Jasper.Layer({name:"hovering", hud:true});
+    gameScene.addLayer(layer1);
+
+    var hovers= [];
+
+    for(var i=0; i<10; i++){
+        for(var j=0;j<10;j++){
+            var hover = new Jasper.Object("status");
+            hover.addBehavior("sprite").setSprite("../assets/evil.png").setHeight(20).setWidth(20);
+            hover.setPos(i*25, j*25);
+            layer0.addObject(hover);
+            hovers.push(hover);
+        }
+    }
+    for(var i=0; i<10; i++){
+        for(var j=0;j<10;j++){
+            var man = new Jasper.Object("man");
+            man.setPos(i*100, j*100);
+            man.addBehavior("spritesheet").attr({
+            spritesheet : "../assets/man_run.png",
+            actions: {
+                run: {
+                    from:0,
+                    to:69,
+                    duration: 1000,
+                    loop: true
+                },
+                walk: {
+                    from:1,
+                    to:4,
+                    loop: false
+                },
+                jump: {
+                    frames:[8,9,10,11,12],
+                    loop: false
+                },
+                stand: {
+                    frames: [1],
+                    loop: false
+                }
+            },
+            frameWidth: 180,
+            frameHeight: 340,
+            width:45,
+            height:85
+
+        }).runAction("run");
+
+            if(i%2==0)
+                layer1.addObject(man);
+            else 
+                layer0.addObject(man);
+            
+        }
+
+    }
+    
+    
+
+    for(var i=0; i<hovers.length; i++){
+        anim = hovers[i].addAnimation("move",{
+                    fromX:hovers[i].getPosX(), 
+                    fromY:hovers[i].getPosY(), 
+                    toX:hovers[i].getPosX()+300, 
+                    toY:hovers[i].getPosY()+300,
+                    duration: 2000,
+                    interpolator:"swing"
+                });
+            anim.start();
+            anim.setOnEnd(function(){
+                //console.log(this);
+                console.log("sc"+i);
+                    parent  = this.getParentObject();
+                    anim=this.getParentObject().addAnimation("move",{
+                    fromX:parent.getPosX(), 
+                    fromY:parent.getPosY(), 
+                    toX:200, 
+                    toY:200,
+                    duration: 2000
+                });
+                anim.start();
+            });
+    }
+
+
+
+/*
+       strangers=[] ;
+       var mouseManager = gameCore.getMouseManager();
+
+        var attract = gameCore.createBehavior("attract",{},{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
+
+
+                    parent.setPosX(parent.getPosX() + ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() + ((mousePos[1]-parent.getPosY())/dist*2.0));
+                }
+
+        });
+
+        var repel = gameCore.createBehavior("repel",{},{
+                update: function(dt){
+                    parent=this.getParentObject();
+                    var mousePos = mouseManager.getMousePos();
+                    var dist = Math.sqrt(Math.pow(mousePos[0]-parent.getPosX(),2)+Math.pow(mousePos[1]-parent.getPosY(),2));
+
+                    parent.setPosX(parent.getPosX() - ((mousePos[0]-parent.getPosX())/dist*2.0));
+                    parent.setPosY(parent.getPosY() - ((mousePos[1]-parent.getPosY())/dist*2.0));
+                }
+
+        });
+
+        var ouch = gameCore.createBehavior("ouch",{}, { update: function(dt){ 
+            this.getParentObject().getBehavior("sprite").setSprite("../assets/evil.png"); 
+        }
+    }
+            );
+
+        //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
+        for(i=0;i<10;i++){
+            for(j=0;j<10;j++){
+            var stranger = new Jasper.Object("stranger");
+            stranger.setPos(i*50,j*50);
+            stranger.addBehavior("sprite").setSprite("../assets/evil.png").setScaleX(0.2).setScaleY(0.2);
+            //stranger.addBehavior("rect").setFillColor('red').setWidth(10).setHeight(20).setStrokeWidth(1);
+            stranger.addBehavior("attract");
+            stranger.addBehavior("ouch");
+            stranger.addBehavior("collision").setOnCollide(function(obj){
+                //console.log("Colliding");
+                this.getParentObject().getBehavior("sprite").setSprite("../assets/angry.png");
+            });
+            layer0.addObject(stranger);
+            strangers.push(stranger);
+            }
+        }
+
+        for(var i=0; i<strangers.length; i++){
+            var strangeMouse = strangers[i].addBehavior("mouse").setOnDown(function(){
+            
+                stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            }).setOnUp(function(){
+                stranger=this.getParentObject();
+                console.log("HERERERERERE onclick :"+ i);
+                if(stranger.hasBehavior("attract")){
+                    stranger.removeBehavior("attract");
+                    stranger.addBehavior("repel");
+                }
+                else if(stranger.hasBehavior("repel")){
+                    stranger.removeBehavior("repel");
+                    stranger.addBehavior("attract");
+                }
+            });
+        }
+    
+
+*/
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>

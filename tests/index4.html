@@ -54,10 +54,10 @@
 
         //console.log("create:: "+Jasper.behaviorManager.getAllBehaviors());
         for(i=0;i<10;i++){
-            for(j=0;j<100;j++){
+            for(j=0;j<10;j++){
             var stranger = new Jasper.Object("stranger");
             stranger.setPos(i*5,j*5);
-            stranger.addBehavior("circle").setFillColor('red').setRadius(5).setStrokeWidth(0);
+            stranger.addBehavior("rect").setFillColor('red').setWidth(10).setHeight(20).setStrokeWidth(1);
             stranger.addBehavior("attract");
             layer0.addObject(stranger);
             strangers.push(stranger);
