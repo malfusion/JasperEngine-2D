@@ -31,37 +31,112 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
-
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p><strong>Jasper 2D</strong>, an object-behavior based game engine that allows game devs to share their custom defined behaviors among other <em>game developers</em> to provide a new social aspect towards gaem development.</p>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="how-it-works" class="anchor" href="#how-it-works"><span class="octicon octicon-link"></span></a>How it works</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p><strong>Jasper 2D</strong> consists of two main components:</p>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<ul>
+<li>
+<h5>
+<a name="objects" class="anchor" href="#objects"><span class="octicon octicon-link"></span></a>Objects</h5>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<ul>
+<li>Objects in Jasper have a logical existence. </li>
+<li>They do not have any behavior associated with them initially. </li>
+<li>They can be tagged with a name for reference.</li>
+<li>In short,</li>
+</ul>
+<blockquote>
+<p>An Object is a logical entity and can be composed of any number of Behaviors</p>
+</blockquote>
+</li>
+<li>
+<h5>
+<a name="behaviors" class="anchor" href="#behaviors"><span class="octicon octicon-link"></span></a>Behaviors</h5>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<ul>
+<li>Behaviors give character to an object. </li>
+<li>They define an object, how it looks, what it does, how it does it, how it handles events, etc. </li>
+<li>In short, </li>
+</ul>
+<blockquote>
+<p>A Mix of Behaviors Define an Object in the game.</p>
+</blockquote>
+</li>
+</ul><h5>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h5>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">hero</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nb">Object</span><span class="p">(</span><span class="s2">"hero"</span><span class="p">);</span>   
+<span class="nx">hero</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"moveAround"</span><span class="p">);</span>
+</pre></div>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<hr><h4>
+<a name="other-components" class="anchor" href="#other-components"><span class="octicon octicon-link"></span></a>Other Components</h4>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<ul>
+<li>
+<h5>
+<a name="core" class="anchor" href="#core"><span class="octicon octicon-link"></span></a>Core</h5>
+
+<ul>
+<li>The Jasper.Core object is the main engine object that takes care of the game loop, all the scenes, layers and objects within it.</li>
+<li>init() must be called on the core to start off the engine.</li>
+</ul>
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">gameCore</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nx">Core</span><span class="p">({</span>
+    <span class="nx">canvasHeight</span><span class="o">:</span> <span class="mi">1200</span><span class="p">,</span>
+    <span class="nx">canvasWidth</span><span class="o">:</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="nx">container</span><span class="o">:</span> <span class="s2">"container"</span>
+<span class="p">}).</span><span class="nx">init</span><span class="p">();</span>
+</pre></div>
+</li>
+<li>
+<h5>
+<a name="scene" class="anchor" href="#scene"><span class="octicon octicon-link"></span></a>Scene</h5>
+
+<ul>
+<li>The Jasper.Scene forms the next level of heirarchy.</li>
+<li>This splits the game into independent scenes each having its own layers.</li>
+<li>Only one scene can be run at a time.</li>
+</ul>
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">gameScene</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nx">Scene</span><span class="p">({</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s2">"main"</span><span class="p">,</span>
+    <span class="nx">worldW</span><span class="o">:</span> <span class="mi">1200</span><span class="p">,</span>
+    <span class="nx">worldH</span><span class="o">:</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>gameCore.addScene(gameScene).startScene(gameScene);</p>
+</li>
+<li>
+<h5>
+<a name="layer" class="anchor" href="#layer"><span class="octicon octicon-link"></span></a>Layer</h5>
+
+<ul>
+<li>The Jasper.Layer acts a container for all objects that are supposed to be in the same z-level. </li>
+<li>This is because the order of rendering of layers are in the same order that they have been added to Scene.</li>
+</ul>
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">arenaLayer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nx">Layer</span><span class="p">({</span>
+    <span class="nx">name</span><span class="o">:</span><span class="s2">"arena"</span>
+    <span class="p">});</span>
+<span class="nx">gameScene</span><span class="p">.</span><span class="nx">addLayer</span><span class="p">(</span><span class="nx">arenaLayer</span><span class="p">);</span>
+</pre></div>
+</li>
+</ul><h4>
+<a name="phew-now-lets-make-something" class="anchor" href="#phew-now-lets-make-something"><span class="octicon octicon-link"></span></a>Phew... Now let's make something</h4>
+
+<p>Let's get started working with Jasper 2D!!! <a href="http://tutorial">On to the tutorial</a> !!!</p>
+
+<hr><h6>
+<a name="author--jude-naveen-raj" class="anchor" href="#author--jude-naveen-raj"><span class="octicon octicon-link"></span></a>Author : Jude Naveen Raj</h6>
+
+<h6>
+<a name="organisation--delta-nitt" class="anchor" href="#organisation--delta-nitt"><span class="octicon octicon-link"></span></a>Organisation : Delta NITT</h6>
       </section>
     </div>
 
