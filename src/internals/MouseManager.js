@@ -19,7 +19,7 @@ Jasper.Mouse = function(){
 
 
     this._callbackObjects = [];
-    this._mousePos = [];
+    this._mousePos = [0,0];
 };
 
 Jasper.Mouse.prototype={

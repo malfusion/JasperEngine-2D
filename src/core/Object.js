@@ -194,7 +194,7 @@ Jasper.Object.prototype = {
             return this.posX;
         },
         setPosX: function(posx){
-            this.posX=Math.floor(posx);
+            this.posX=posx;//Math.floor(posx);
         },
         /**
          * Get the y coordinate of the object's current position in the world
@@ -205,7 +205,7 @@ Jasper.Object.prototype = {
             return this.posY;
         },
         setPosY: function(posy){
-            this.posY=Math.floor(posy);
+            this.posY=posy;//Math.floor(posy);
         },
         /**
          * Get the height of the object
@@ -251,7 +251,8 @@ Jasper.Object.prototype = {
             return [this.posX, this.posY];
         },
         setPos: function(x,y){
-            this.posX=Math.floor(x); this.posY=Math.floor(y);
+            this.posX=x;//Math.floor(x); 
+            this.posY=y;//Math.floor(y);
         },
         /**
          * Get the alpha of the object
