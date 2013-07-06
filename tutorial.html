@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Jasper Engine 2D : An Object-Behavior Based 2D Game Engine for Javascript." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Jasper Engine 2D</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/judenaveenraj/JasperEngine-2D">View on GitHub</a>
+
+          <h1 id="project_title">Jasper Engine 2D</h1>
+          <h2 id="project_tagline">An Object-Behavior Based 2D Game Engine for Javascript.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/judenaveenraj/JasperEngine-2D/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/judenaveenraj/JasperEngine-2D/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        
+
+<h2>Lets have some fun now!</h2>
+
+<p>We are going to start off with something to teach you the basics of object-behavior manipulation.</p>
+
+<p>In this tutorial, we will make a scene where a number of object are going to be constantly chasing the mouse. We'll introduce new variations as we go through the tutorial.</p>
+
+<h2>Before we begin</h2>
+
+<p>Make sure to have done the following:</p>
+
+<ol>
+<li><p>Create a html page with a &lt;div> having <em>id</em> = 'container' <br />
+<code>
+html
+&lt;div id="container"&gt;
+&lt;/div&gt;
+</code></p></li>
+<li><p>Include the jasperengine.js or jasperengine.min.js <br />
+<code>
+html
+&lt;script src="(path_to_js)/jasperengine.js" &gt;&lt;/script&gt;
+</code></p></li>
+</ol>
+
+
+<h3>Creating the core</h3>
+
+<p>Lets start off by creating a core object. This is done by constructing a new Jasper.Core object by passing an argument object containing:</p>
+
+<ol>
+<li><p><em>canvasHeight</em> : Height of the canvas to be created.</p></li>
+<li><p><em>canvasWidth</em> : Width of the canvas to be created.</p></li>
+<li><em>container</em> : The name of the &lt;div> inside which the canvas is to be created.</li>
+</ol>
+
+
+<p>After creating the <em>gameCore</em> object, init() must be called on it to start the JasperEngine game loop.</p>
+
+<blockquote><p>init() must be called during the creation of Jasper.Core object. However it can be paused and resume anytime later.</p></blockquote>
+
+<pre><code>javascript
+var gameCore = new Jasper.Core({
+        canvasHeight: 800,
+        canvasWidth: 1000,
+        container: "container"
+    }).init();
+</code></pre>
+
+<h3>Getting the heirarchy up</h3>
+
+<p><strong>First, let's create the main game Scene</strong> which will contain our layers in the game. However in this game, we only have one layer.</p>
+
+<p>We can create a Jasper.Scene by passing in an object with the following:</p>
+
+<ol>
+<li><p><em>name</em> : The name of the scene, juz so we can use it later</p></li>
+<li><p><em>worldW</em> : The width of the entire world in this scene, even the off-canvas area.</p></li>
+<li><p><em>worldH</em> : The hieght of the entire world in this scene, even the off-canvas area.</p></li>
+</ol>
+
+
+<p>Finally add the scene to the gameCore object and start it. However there is nothing for the engine to display right now.</p>
+
+<pre><code>    javascript
+    var gameScene = new Jasper.Scene({
+        name: "main",
+        worldW: 800,
+        worldH: 1000,
+    });
+
+    gameCore.addScene(gameScene).startScene(gameScene);
+</code></pre>
+
+<p><strong>Now it's time to get our Layer up.</strong> Remember that from here on in the heirarchy,</p>
+
+<blockquote><p>The order in which you add layers to scenes or add objects to layers play a role in determining their z-level.</p>
+
+<p>Each the objects in one layer are at a different z-level relative to the objects in the another layer.</p></blockquote>
+
+<p>We can create a Jasper.Layer ,let's call it "arena", by passing in an object with the following:</p>
+
+<ol>
+<li><em>name</em> : The name of the scene, juz so we can use it later</li>
+</ol>
+
+
+<p>Then, add the layer to the scene. This makes the layer as the innermost layer in the scene. Since we have only one layer, it doesnt matter now.</p>
+
+<pre><code>``` 
+javascript
+var arenaLayer = new Jasper.Layer({name:"arena"});
+gameScene.addLayer(arenaLayer);
+```
+</code></pre>
+
+<h3>Rise my minions!</h3>
+
+<p>Let's bring in these bad boys:</p>
+
+<h4>image here</h4>
+
+<p><strong><em>Download the image above and keep it in "/img/"</em></strong></p>
+
+<p>First we need to create an object:</p>
+
+<pre><code>    javascript
+    var evilface = new Jasper.Object("evilface");
+</code></pre>
+
+<blockquote><p>At this point, the object is almost nothing.</p></blockquote>
+
+<p>So let's add a sprite behavior to give it some visual evilness!!!</p>
+
+<pre><code>    javascript
+    evilface.addBehavior("sprite").setSprite("../img/evil.png").setHeight(30).setWidth(30);
+</code></pre>
+
+<p>Thats awesome but we can't have any fun with one evilface, we need a lot more!!! A hundred seems fair enough!</p>
+
+<pre><code>javascript
+for(i=0;i&lt;10;i++){
+        for(j=0;j&lt;10;j++){
+        var evilface = new Jasper.Object("evilface");
+        evilface.setPos(i*50,j*50);
+        evilface.addBehavior("sprite").setSprite("../img/evil.png").setHeight(30).setWidth(30);
+        arenaLayer.addObject(evilface);
+        }
+    }
+</code></pre>
+
+<h3>Show two ways of creating the behavior for sprite here</h3>
+
+<p><strong><em>Run the file.</em></strong></p>
+
+<p>Seems like the evilfaces are not so evil… THEY ARENT MOVING YET.</p>
+
+<h5>So let's make our first custom behavior. Let's call it "chaseMe"</h5>
+
+<pre><code>    javascript
+    gameCore.createBehavior("attract",{},{
+            onUpdate: function(dt){
+                parent=this.getParentObject();
+                pos = parent.getPos();
+                var mousePos = mouseManager.getMousePos();
+
+                var dist = Math.sqrt(Math.pow(mousePos[0]-pos[0],2)+Math.pow(mousePos[1]-pos[1],2));
+                parent.setPosX(parent.getPosX() + ((mousePos[0]-pos[0])/dist*2.0));
+                parent.setPosY(parent.getPosY() + ((mousePos[1]-pos[1])/dist*2.0));
+            }
+
+    });
+</code></pre>
+
+<p>Don't freak out! Its not that hard… Now, let me explain the above code.</p>
+<hr><h6>
+<a name="author--jude-naveen-raj" class="anchor" href="#author--jude-naveen-raj"><span class="octicon octicon-link"></span></a>Author : Jude Naveen Raj</h6>
+
+<h6>
+<a name="organisation--delta-nitt" class="anchor" href="#organisation--delta-nitt"><span class="octicon octicon-link"></span></a>Organisation : Delta NITT</h6>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Jasper Engine 2D maintained by <a href="https://github.com/judenaveenraj">judenaveenraj</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-41766257-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
