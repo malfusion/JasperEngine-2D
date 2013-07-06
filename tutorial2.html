@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Jasper Engine 2D : An Object-Behavior Based 2D Game Engine for Javascript." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Jasper Engine 2D</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/judenaveenraj/JasperEngine-2D">View on GitHub</a>
+
+          <h1 id="project_title">Jasper Engine 2D</h1>
+          <h2 id="project_tagline">An Object-Behavior Based 2D Game Engine for Javascript.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/judenaveenraj/JasperEngine-2D/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/judenaveenraj/JasperEngine-2D/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        
+<h1>
+<a name="jasper-engine-2d-1" class="anchor" href="#jasper-engine-2d-1"><span class="octicon octicon-link"></span></a>Jasper Engine 2D</h1>
+
+<h2>
+<a name="time-to-customize" class="anchor" href="#time-to-customize"><span class="octicon octicon-link"></span></a>Time to Customize!!!</h2>
+
+<h5>
+<a name="so-lets-make-our-first-custom-behavior-how-bout-we-call-it-chaseme-" class="anchor" href="#so-lets-make-our-first-custom-behavior-how-bout-we-call-it-chaseme-"><span class="octicon octicon-link"></span></a>So let's make our first custom behavior. How bout we call it "chaseMe" !</h5>
+
+<div class="highlight"><pre>
+    <span class="kd">var</span> <span class="nx">mouseManager</span> <span class="o">=</span> <span class="nx">gameCore</span><span class="p">.</span><span class="nx">getMouseManager</span><span class="p">();</span>
+
+    <span class="nx">gameCore</span><span class="p">.</span><span class="nx">createBehavior</span><span class="p">(</span><span class="s2">"chaseMe"</span><span class="p">,{},{</span>
+            <span class="nx">onUpdate</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dt</span><span class="p">){</span>
+                <span class="nx">parent</span><span class="o">=</span><span class="k">this</span><span class="p">.</span><span class="nx">getParentObject</span><span class="p">();</span>
+                <span class="nx">pos</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">.</span><span class="nx">getPos</span><span class="p">();</span>
+                <span class="kd">var</span> <span class="nx">mousePos</span> <span class="o">=</span> <span class="nx">mouseManager</span><span class="p">.</span><span class="nx">getMousePos</span><span class="p">();</span>
+
+                <span class="kd">var</span> <span class="nx">dist</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">2</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosX</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosX</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosY</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosY</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+            <span class="p">}</span>
+
+    <span class="p">});</span>
+</pre></div>
+
+<p>Don't freak out! Its not that hard… Now, let me explain the above code.</p>
+
+<h3>
+<a name="custom-behaviors" class="anchor" href="#custom-behaviors"><span class="octicon octicon-link"></span></a>Custom Behaviors</h3>
+
+<ol>
+<li> First, a custom is behavior is created using the syntax</li>
+</ol><div class="highlight"><pre>    <span class="nx">gameCore</span><span class="p">.</span><span class="nx">createBehavior</span><span class="p">(</span> <span class="o">&lt;</span><span class="nx">the</span> <span class="nx">name</span> <span class="nx">of</span> <span class="nx">the</span> <span class="nx">behavior</span><span class="o">&gt;</span><span class="p">,</span>
+                          <span class="o">&lt;</span><span class="nx">an</span> <span class="nx">object</span> <span class="kd">with</span> <span class="nx">the</span> <span class="nx">local</span> <span class="nx">variables</span> <span class="nx">it</span> <span class="nx">needs</span><span class="o">&gt;</span><span class="p">,</span>
+                          <span class="o">&lt;</span><span class="nx">an</span> <span class="nx">object</span> <span class="kd">with</span> <span class="nx">the</span> <span class="nx">functions</span> <span class="nx">that</span> <span class="nx">it</span> <span class="nx">uses</span><span class="o">&gt;</span> <span class="p">);</span>
+
+</pre></div>
+
+<blockquote>
+<h3>
+<a name="inside-any-of-the-custom-behavior-function-definitions-thisgetparentobject-will-return-the-object-to-which-it-is-attached" class="anchor" href="#inside-any-of-the-custom-behavior-function-definitions-thisgetparentobject-will-return-the-object-to-which-it-is-attached"><span class="octicon octicon-link"></span></a>Inside any of the custom behavior function definitions, this.getParentObject() will return the object to which it is attached.</h3>
+</blockquote>
+
+<p><strong>Note</strong>: use '*this*' operator to access the functions and variables of the behavior itself, including the ones that were declared in the object above.</p>
+
+<ol>
+<li>
+<p>The new behavior defined has functions that can be overridden:</p>
+
+<ul>
+<li>  onInit</li>
+<li>  onUpdate</li>
+<li>  onRemove</li>
+</ul>
+<p>So we override the onUpdate because the mouse must be tracked during every frame update.</p>
+</li>
+<li><p>We need to get the mouse coordinates on-demand. Hence we can obtain the MouseManager from the gameCore and can call the getMousePos() on that object.</p></li>
+<li><p>The following is a simple vector normalisation of the vector between the current object position and the mouse position. (ignore this for now, if you don't get it. Just know that this piece of code simply performs some math that serves to move the object)</p></li>
+</ol><div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">dist</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">2</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosX</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosX</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosY</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosY</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+</pre></div>
+
+<ol>
+<li>Now the behavior is registered to the gameCore under the name "chaseMe"</li>
+</ol><h2>
+<a name="almost-there" class="anchor" href="#almost-there"><span class="octicon octicon-link"></span></a>Almost There</h2>
+
+<p>Now, do you remember we created the objects in the previous page of the tutorial?</p>
+
+<h4>
+<a name="the-magic" class="anchor" href="#the-magic"><span class="octicon octicon-link"></span></a>THE MAGIC…!!!</h4>
+
+<p><strong>All thats left to add is one single line</strong>: evilface.addBehavior("chaseMe");</p>
+
+<div class="highlight"><pre>
+    <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="k">for</span><span class="p">(</span><span class="nx">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">j</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">j</span><span class="o">++</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">evilface</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nb">Object</span><span class="p">(</span><span class="s2">"evilface"</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">setPos</span><span class="p">(</span><span class="nx">i</span><span class="o">*</span><span class="mi">50</span><span class="p">,</span><span class="nx">j</span><span class="o">*</span><span class="mi">50</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"sprite"</span><span class="p">).</span><span class="nx">setSprite</span><span class="p">(</span><span class="s2">"../img/evil.png"</span><span class="p">).</span><span class="nx">setHeight</span><span class="p">(</span><span class="mi">30</span><span class="p">).</span><span class="nx">setWidth</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"chaseMe"</span><span class="p">);</span>
+
+        <span class="nx">arenaLayer</span><span class="p">.</span><span class="nx">addObject</span><span class="p">(</span><span class="nx">evilface</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</pre></div>
+
+<h3>
+<a name="presto" class="anchor" href="#presto"><span class="octicon octicon-link"></span></a>Presto!!!</h3>
+
+<p>Run the game and run away as the minions chase after you until they eventually hit you or you run out the screen! 
+Thats not fair though… :( </p>
+
+<h6>
+<a name="author--jude-naveen-raj" class="anchor" href="#author--jude-naveen-raj"><span class="octicon octicon-link"></span></a>Author : Jude Naveen Raj</h6>
+
+<h6>
+<a name="organisation--delta-nitt" class="anchor" href="#organisation--delta-nitt"><span class="octicon octicon-link"></span></a>Organisation : Delta NITT</h6>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Jasper Engine 2D maintained by <a href="https://github.com/judenaveenraj">judenaveenraj</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-41766257-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
