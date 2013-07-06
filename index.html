@@ -132,7 +132,252 @@
 
 <p>Let's get started working with Jasper 2D!!! <a href="http://judenaveenraj.github.io/JasperEngine-2D/tutorial.html">On to the tutorial</a> !!!</p>
 
-<hr><h6>
+<hr><h1>
+<a name="jasper-engine-2d" class="anchor" href="#jasper-engine-2d"><span class="octicon octicon-link"></span></a>Jasper Engine 2D</h1>
+
+<h2>
+<a name="lets-have-some-fun-now" class="anchor" href="#lets-have-some-fun-now"><span class="octicon octicon-link"></span></a>Lets have some fun now!</h2>
+
+<p>We are going to start off with something to teach you the basics of object-behavior manipulation.</p>
+
+<p>In this tutorial, we will make a scene where a number of object are going to be constantly chasing the mouse. We'll introduce new variations as we go through the tutorial.</p>
+
+<h3>
+<a name="before-we-begin" class="anchor" href="#before-we-begin"><span class="octicon octicon-link"></span></a>Before we begin</h3>
+
+<p>Make sure to have done the following:</p>
+
+<ol>
+<li>
+<p>Create a html page with a &lt;div&gt; having <em>id</em> = 'container' <br></p>
+
+<div class="highlight"><pre><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"container"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/div&gt;</span>
+</pre></div>
+</li>
+<li>
+<p>Include the jasperengine.js or jasperengine.min.js <br></p>
+
+<div class="highlight"><pre><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"(path_to_js)/jasperengine.js"</span> <span class="nt">&gt;&lt;/script&gt;</span>
+</pre></div>
+
+<hr>
+</li>
+</ol><h3>
+<a name="creating-the-core" class="anchor" href="#creating-the-core"><span class="octicon octicon-link"></span></a>Creating the core</h3>
+
+<p>Lets start off by creating a core object. This is done by constructing a new Jasper.Core object by passing an argument object containing:</p>
+
+<ol>
+<li> <em>canvasHeight</em> : Height of the canvas to be created.</li>
+<li> <em>canvasWidth</em> : Width of the canvas to be created.</li>
+<li> <em>container</em> : The name of the &lt;div&gt; inside which the canvas is to be created.</li>
+</ol><p>After creating the <em>gameCore</em> object, init() must be called on it to start the JasperEngine game loop.</p>
+
+<blockquote>
+<p>init() must be called during the creation of Jasper.Core object. However it can be paused and resume anytime later.</p>
+</blockquote>
+
+<div class="highlight"><pre>
+<span class="kd">var</span> <span class="nx">gameCore</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nx">Core</span><span class="p">({</span>
+        <span class="nx">canvasHeight</span><span class="o">:</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="nx">canvasWidth</span><span class="o">:</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="nx">container</span><span class="o">:</span> <span class="s2">"container"</span>
+    <span class="p">}).</span><span class="nx">init</span><span class="p">();</span>
+
+</pre></div>
+
+<hr><h3>
+<a name="getting-the-heirarchy-up" class="anchor" href="#getting-the-heirarchy-up"><span class="octicon octicon-link"></span></a>Getting the heirarchy up</h3>
+
+<p><strong>First, let's create the main game Scene</strong> which will contain our layers in the game. However in this game, we only have one layer.</p>
+
+<p>We can create a Jasper.Scene by passing in an object with the following:</p>
+
+<ol>
+<li> <em>name</em> : The name of the scene, juz so we can use it later</li>
+<li> <em>worldW</em> : The width of the entire world in this scene, even the off-canvas area.</li>
+<li> <em>worldH</em> : The hieght of the entire world in this scene, even the off-canvas area.</li>
+</ol><p>Finally add the scene to the gameCore object and start it. However there is nothing for the engine to display right now.</p>
+
+<div class="highlight"><pre>
+    <span class="kd">var</span> <span class="nx">gameScene</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nx">Scene</span><span class="p">({</span>
+        <span class="nx">name</span><span class="o">:</span> <span class="s2">"main"</span><span class="p">,</span>
+        <span class="nx">worldW</span><span class="o">:</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="nx">worldH</span><span class="o">:</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">});</span>
+    <span class="nx">gameCore</span><span class="p">.</span><span class="nx">addScene</span><span class="p">(</span><span class="nx">gameScene</span><span class="p">).</span><span class="nx">startScene</span><span class="p">(</span><span class="nx">gameScene</span><span class="p">);</span>
+
+</pre></div>
+
+<hr><p><strong>Now it's time to get our Layer up.</strong> Remember, from here onwards in the heirarchy, </p>
+
+<blockquote>
+<p>The order in which you add layers to scenes or add objects to layers play a role in determining their z-level. </p>
+
+<p>Each the objects in one layer are at a different z-level relative to the objects in the another layer.</p>
+</blockquote>
+
+<p><strong>Let's create a Jasper.Layer</strong> ,with the name "arena", by passing in an object with the following:</p>
+
+<ul>
+<li>  <em>name</em> : The name of the scene, juz so we can use it later</li>
+</ul><p>Then, add the layer to the scene. This makes the layer as the innermost layer in the scene. Since we have only one layer, it doesnt matter now.</p>
+
+<pre><code>``` javascript
+
+var arenaLayer = new Jasper.Layer({name:"arena"});
+gameScene.addLayer(arenaLayer);
+
+```
+</code></pre>
+
+<hr><h3>
+<a name="rise-my-minions" class="anchor" href="#rise-my-minions"><span class="octicon octicon-link"></span></a>Rise my minions!</h3>
+
+<p>Let's bring in these bad boys:</p>
+
+<p><img src="http://judenaveenraj.github.io/JasperEngine-2D/images/evil.png" height="128" width="128/"></p>
+
+<p><strong><em><a href="http://judenaveenraj.github.io/JasperEngine-2D/images/evil.png">Download the image</a> and keep it in '/img/'</em></strong> as <strong><em>'evil.png'</em></strong></p>
+
+<p>First we need to create an object:</p>
+
+<div class="highlight"><pre>
+    <span class="kd">var</span> <span class="nx">evilface</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nb">Object</span><span class="p">(</span><span class="s2">"evilface"</span><span class="p">);</span>
+
+</pre></div>
+
+<blockquote>
+<p>At this point, the object is almost nothing.</p>
+</blockquote>
+
+<p>So let's add a sprite behavior to give it some visual evilness!!! </p>
+
+<div class="highlight"><pre>    <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"sprite"</span><span class="p">).</span><span class="nx">setSprite</span><span class="p">(</span><span class="s2">"../img/evil.png"</span><span class="p">).</span><span class="nx">setHeight</span><span class="p">(</span><span class="mi">30</span><span class="p">).</span><span class="nx">setWidth</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+</pre></div>
+
+<p>Thats awesome but we can't have any fun with one evilface, we need a lot more!!! A hundred seems fair enough!</p>
+
+<div class="highlight"><pre>
+    <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="k">for</span><span class="p">(</span><span class="nx">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">j</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">j</span><span class="o">++</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">evilface</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nb">Object</span><span class="p">(</span><span class="s2">"evilface"</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">setPos</span><span class="p">(</span><span class="nx">i</span><span class="o">*</span><span class="mi">50</span><span class="p">,</span><span class="nx">j</span><span class="o">*</span><span class="mi">50</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"sprite"</span><span class="p">).</span><span class="nx">setSprite</span><span class="p">(</span><span class="s2">"../img/evil.png"</span><span class="p">).</span><span class="nx">setHeight</span><span class="p">(</span><span class="mi">30</span><span class="p">).</span><span class="nx">setWidth</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+        <span class="nx">arenaLayer</span><span class="p">.</span><span class="nx">addObject</span><span class="p">(</span><span class="nx">evilface</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</pre></div>
+
+<h3>
+<a name="show-two-ways-of-creating-the-behavior-for-sprite-here" class="anchor" href="#show-two-ways-of-creating-the-behavior-for-sprite-here"><span class="octicon octicon-link"></span></a>Show two ways of creating the behavior for sprite here</h3>
+
+<p><strong><em>Run the file.</em></strong></p>
+
+<p>Seems like the evilfaces are not so evil… THEY ARENT MOVING YET.</p>
+
+<p><a href="http://judenaveenraj.github.io/JasperEngine-2D/tutorial2.html">I guess it's time for a custom behavior now!!! Continue Tutorial...</a></p>
+
+<h1>
+<a name="jasper-engine-2d-1" class="anchor" href="#jasper-engine-2d-1"><span class="octicon octicon-link"></span></a>Jasper Engine 2D</h1>
+
+<h2>
+<a name="time-to-customize" class="anchor" href="#time-to-customize"><span class="octicon octicon-link"></span></a>Time to Customize!!!</h2>
+
+<h5>
+<a name="so-lets-make-our-first-custom-behavior-how-bout-we-call-it-chaseme-" class="anchor" href="#so-lets-make-our-first-custom-behavior-how-bout-we-call-it-chaseme-"><span class="octicon octicon-link"></span></a>So let's make our first custom behavior. How bout we call it "chaseMe" !</h5>
+
+<div class="highlight"><pre>
+    <span class="kd">var</span> <span class="nx">mouseManager</span> <span class="o">=</span> <span class="nx">gameCore</span><span class="p">.</span><span class="nx">getMouseManager</span><span class="p">();</span>
+
+    <span class="nx">gameCore</span><span class="p">.</span><span class="nx">createBehavior</span><span class="p">(</span><span class="s2">"chaseMe"</span><span class="p">,{},{</span>
+            <span class="nx">onUpdate</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dt</span><span class="p">){</span>
+                <span class="nx">parent</span><span class="o">=</span><span class="k">this</span><span class="p">.</span><span class="nx">getParentObject</span><span class="p">();</span>
+                <span class="nx">pos</span> <span class="o">=</span> <span class="nx">parent</span><span class="p">.</span><span class="nx">getPos</span><span class="p">();</span>
+                <span class="kd">var</span> <span class="nx">mousePos</span> <span class="o">=</span> <span class="nx">mouseManager</span><span class="p">.</span><span class="nx">getMousePos</span><span class="p">();</span>
+
+                <span class="kd">var</span> <span class="nx">dist</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">2</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosX</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosX</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosY</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosY</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+            <span class="p">}</span>
+
+    <span class="p">});</span>
+</pre></div>
+
+<p>Don't freak out! Its not that hard… Now, let me explain the above code.</p>
+
+<h3>
+<a name="custom-behaviors" class="anchor" href="#custom-behaviors"><span class="octicon octicon-link"></span></a>Custom Behaviors</h3>
+
+<ol>
+<li> First, a custom is behavior is created using the syntax</li>
+</ol><div class="highlight"><pre>    <span class="nx">gameCore</span><span class="p">.</span><span class="nx">createBehavior</span><span class="p">(</span> <span class="o">&lt;</span><span class="nx">the</span> <span class="nx">name</span> <span class="nx">of</span> <span class="nx">the</span> <span class="nx">behavior</span><span class="o">&gt;</span><span class="p">,</span>
+                          <span class="o">&lt;</span><span class="nx">an</span> <span class="nx">object</span> <span class="kd">with</span> <span class="nx">the</span> <span class="nx">local</span> <span class="nx">variables</span> <span class="nx">it</span> <span class="nx">needs</span><span class="o">&gt;</span><span class="p">,</span>
+                          <span class="o">&lt;</span><span class="nx">an</span> <span class="nx">object</span> <span class="kd">with</span> <span class="nx">the</span> <span class="nx">functions</span> <span class="nx">that</span> <span class="nx">it</span> <span class="nx">uses</span><span class="o">&gt;</span> <span class="p">);</span>
+
+</pre></div>
+
+<blockquote>
+<h3>
+<a name="inside-any-of-the-custom-behavior-function-definitions-thisgetparentobject-will-return-the-object-to-which-it-is-attached" class="anchor" href="#inside-any-of-the-custom-behavior-function-definitions-thisgetparentobject-will-return-the-object-to-which-it-is-attached"><span class="octicon octicon-link"></span></a>Inside any of the custom behavior function definitions, this.getParentObject() will return the object to which it is attached.</h3>
+</blockquote>
+
+<p><strong>Note</strong>: use '*this*' operator to access the functions and variables of the behavior itself, including the ones that were declared in the object above.</p>
+
+<ol>
+<li>
+<p>The new behavior defined has functions that can be overridden:</p>
+
+<ul>
+<li>  onInit</li>
+<li>  onUpdate</li>
+<li>  onRemove</li>
+</ul>
+<p>So we override the onUpdate because the mouse must be tracked during every frame update.</p>
+</li>
+<li><p>We need to get the mouse coordinates on-demand. Hence we can obtain the MouseManager from the gameCore and can call the getMousePos() on that object.</p></li>
+<li><p>The following is a simple vector normalisation of the vector between the current object position and the mouse position. (ignore this for now, if you don't get it. Just know that this piece of code simply performs some math that serves to move the object)</p></li>
+</ol><div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">dist</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">2</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosX</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosX</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">setPosY</span><span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getPosY</span><span class="p">()</span> <span class="o">+</span> <span class="p">((</span><span class="nx">mousePos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="nx">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nx">dist</span><span class="o">*</span><span class="mf">2.0</span><span class="p">));</span>
+</pre></div>
+
+<ol>
+<li>Now the behavior is registered to the gameCore under the name "chaseMe"</li>
+</ol><h2>
+<a name="almost-there" class="anchor" href="#almost-there"><span class="octicon octicon-link"></span></a>Almost There</h2>
+
+<p>Now, do you remember we created the objects in the previous page of the tutorial?</p>
+
+<h4>
+<a name="the-magic" class="anchor" href="#the-magic"><span class="octicon octicon-link"></span></a>THE MAGIC…!!!</h4>
+
+<p><strong>All thats left to add is one single line</strong>: evilface.addBehavior("chaseMe");</p>
+
+<div class="highlight"><pre>
+    <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="k">for</span><span class="p">(</span><span class="nx">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">j</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">;</span><span class="nx">j</span><span class="o">++</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">evilface</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Jasper</span><span class="p">.</span><span class="nb">Object</span><span class="p">(</span><span class="s2">"evilface"</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">setPos</span><span class="p">(</span><span class="nx">i</span><span class="o">*</span><span class="mi">50</span><span class="p">,</span><span class="nx">j</span><span class="o">*</span><span class="mi">50</span><span class="p">);</span>
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"sprite"</span><span class="p">).</span><span class="nx">setSprite</span><span class="p">(</span><span class="s2">"../img/evil.png"</span><span class="p">).</span><span class="nx">setHeight</span><span class="p">(</span><span class="mi">30</span><span class="p">).</span><span class="nx">setWidth</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+
+        <span class="nx">evilface</span><span class="p">.</span><span class="nx">addBehavior</span><span class="p">(</span><span class="s2">"chaseMe"</span><span class="p">);</span>
+
+        <span class="nx">arenaLayer</span><span class="p">.</span><span class="nx">addObject</span><span class="p">(</span><span class="nx">evilface</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</pre></div>
+
+<h3>
+<a name="presto" class="anchor" href="#presto"><span class="octicon octicon-link"></span></a>Presto!!!</h3>
+
+<p>Run the game and run away as the minions chase after you until they eventually hit you or you run out the screen! 
+Thats not fair though… :( </p>
+
+<h6>
 <a name="author--jude-naveen-raj" class="anchor" href="#author--jude-naveen-raj"><span class="octicon octicon-link"></span></a>Author : Jude Naveen Raj</h6>
 
 <h6>
