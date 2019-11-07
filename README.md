@@ -4,8 +4,10 @@
 - http://malfusion.github.io/JasperEngine-2D
 # Demo
 - Zombies (Click and hold to repel, watch the demons get infected by the zombie virus when they too close)
+  - ![Image description](./assets/sample1.png)
   - [Sample 1](http://malfusion.github.io/JasperEngine-2D/tests/index8.html)
 - Park (Example of a game area larger than the viewport area, move mouse to pan, humans bump against each other)
+  - ![Image description](./assets/sample2.png)
   - [Sample 2](http://malfusion.github.io/JasperEngine-2D/tests/sample1.html)
 
 ## Architecture:
