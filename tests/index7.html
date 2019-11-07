@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div id="container"><canvas id="canvas" width=500 height=500></canvas></div>
+
+<canvas id="canvas1" width=500 height=500></canvas>
+<canvas id="canvas2" width=500 height=500></canvas>
+<canvas id="canvas3" width=500 height=500></canvas>
+
+
+
+<script>
+var can = document.getElementById("canvas");
+can = can.getContext("2d");
+
+var img = new Image();
+
+can.fillStyle = "rgba(0,0,0,0)";
+can.fillRect(0,0,500,500);
+
+img.onload=function(){
+    can.drawImage(img,0,0,500,500);
+    var imgData = can.getImageData(0,0,500,500);
+    var pixel = [];
+    for(i=0;i<500;i++){
+        pixel[i] = [];
+        for(j=0;j<500;j++){
+            pixel[i][j] = imgData.data[i*500*4 + j*4 + 3];
+            if(pixel[i][j] != 0) {
+            //console.log(pixel[i][j]);
+            //console.log(imgData.data[i*500*4 + j*4 + 0],imgData.data[i*500*4 + j*4 + 1],imgData.data[i*500*4 + j*4 + 2],imgData.data[i*500*4 + j*4 + 3])
+                imgData.data[i*500*4 + j*4 + 0] = 0;
+               imgData.data[i*500*4 + j*4 + 1] = 0;
+                imgData.data[i*500*4 + j*4 + 2] = 0;
+                imgData.data[i*500*4 + j*4 + 3] = 255;
+            }
+
+
+        }
+    } 
+    can.putImageData(imgData,0,0,0,0,500,500);
+}
+
+img.src = "../assets/evil.png";
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>
